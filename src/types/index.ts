@@ -27,8 +27,8 @@ export interface TouristSpot {
 }
 
 // 날씨/계절
-export type Weather = 'sunny' | 'cloudy' | 'rainy' | 'snowy';
-export type Season = 'spring' | 'summer' | 'fall' | 'winter';
+export type Weather = "sunny" | "cloudy" | "rainy" | "snowy";
+export type Season = "spring" | "summer" | "fall" | "winter";
 
 // 지도
 export interface MapBounds {
@@ -40,14 +40,14 @@ export interface MapBounds {
 
 export interface MapMarker {
   id: string;
-  type: 'spot' | 'shorts' | 'cluster';
+  type: "spot" | "shorts" | "cluster";
   latitude: number;
   longitude: number;
   count?: number;
 }
 
 // 바텀시트 상태
-export type BottomSheetState = 'min' | 'middle' | 'max';
+export type BottomSheetState = "min" | "middle" | "max";
 
 // 업로드
 export interface VideoMetadata {
@@ -66,4 +66,16 @@ export interface UploadData {
   weather: Weather | null;
   season: Season | null;
   title: string;
+}
+
+// 피드 타입
+export type FeedType = "feed" | "related";
+
+// 관련 영상 파라미터
+export interface RelatedParams {
+  spotId?: string;
+  district?: string;
+  latitude?: number;
+  longitude?: number;
+  radius?: number;
 }
