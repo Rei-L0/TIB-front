@@ -1,11 +1,11 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { MainPage, ShortsListPage, ShortsViewerPage, UploadPage } from '@/pages';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MainPage, ShortsListPage, ShortsViewerPage, UploadPage } from "@/pages";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5분
+      staleTime: 1000 * 60 * 5,
       retry: 1,
     },
   },
@@ -19,7 +19,7 @@ function App() {
           <Routes>
             <Route path="/" element={<MainPage />} />
             <Route path="/shorts" element={<ShortsListPage />} />
-            <Route path="/shorts/:id" element={<ShortsViewerPage />} />
+            <Route path="/shorts/viewer" element={<ShortsViewerPage />} />
             <Route path="/upload" element={<UploadPage />} />
           </Routes>
         </div>

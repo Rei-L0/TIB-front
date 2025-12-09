@@ -18,11 +18,51 @@ apiClient.interceptors.request.use((config) => {
 
 // 숏츠 API
 export const shortsApi = {
-  getFeed: async (cursor?: string, limit = 10) => {
+  // 개인화 추천 피드
+  getFeed: async (params?: {
+    cursor?: string;
+    limit?: number;
+    userId?: string;
+    latitude?: number;
+    longitude?: number;
+    preferredSeasons?: string[];
+    preferredWeather?: string;
+  }) => {
     const { data } = await apiClient.get<{
       data: Shorts[];
       nextCursor: string | null;
-    }>("/shorts/feed", { params: { cursor, limit } });
+      totalCount: number;
+    }>("/shorts/feed", {
+      params: {
+        ...params,
+        preferredSeasons: params?.preferredSeasons?.join(","),
+        limit: params?.limit || 10,
+      },
+    });
+    return data;
+  },
+
+  // 관련 영상 피드 (지역/관광지 기준)
+  getRelated: async (params?: {
+    cursor?: string;
+    limit?: number;
+    spotId?: string;
+    district?: string;
+    latitude?: number;
+    longitude?: number;
+    radius?: number;
+  }) => {
+    const { data } = await apiClient.get<{
+      data: Shorts[];
+      nextCursor: string | null;
+      totalCount: number;
+    }>("/shorts/related", {
+      params: {
+        ...params,
+        limit: params?.limit || 10,
+        radius: params?.radius || 3000,
+      },
+    });
     return data;
   },
 
