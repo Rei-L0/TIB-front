@@ -10,6 +10,8 @@ interface MapStore {
     weather: Weather | null;
     season: Season | null;
   };
+  places: TouristSpot[]
+  setPlaces: (places: TouristSpot[]) => void 
   setCenter: (lat: number, lng: number) => void;
   setZoom: (zoom: number) => void;
   setSelectedSpot: (id: string | null) => void;
@@ -24,6 +26,8 @@ export const useMapStore = create<MapStore>((set) => ({
     weather: null,
     season: null,
   },
+  places: [],
+  setPlaces: (places) => set({ places }),
   setCenter: (lat, lng) => set({ center: { lat, lng } }),
   setZoom: (zoom) => set({ zoom }),
   setSelectedSpot: (id) => set({ selectedSpotId: id }),
