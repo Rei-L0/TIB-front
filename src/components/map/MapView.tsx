@@ -11,7 +11,7 @@ declare global {
 export const MapView = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
-  const markersRef = useRef<any[]>([]);
+  const clustererRef = useRef<any>(null); 
   const [isLoaded, setIsLoaded] = useState(false);
   const { center, zoom, setCenter, setZoom } = useMapStore();
   const { open } = useBottomSheetStore();
@@ -19,74 +19,80 @@ export const MapView = () => {
   const { places, setPlaces } = useMapStore()
 
   useEffect(() => {
-    // 환경변수 확인
-    console.log("VITE_KAKAO_MAP_KEY:", import.meta.env.VITE_KAKAO_MAP_KEY);
-    console.log("window.kakao:", window.kakao);
-    console.log("window.kakao?.maps:", window.kakao?.maps);
 
-    const checkKakao = setInterval(() => {
-      console.log("Checking kakao...", !!window.kakao, !!window.kakao?.maps);
+    // 이미 로드
+    if (window.kakao && window.kakao.maps) {
+      window.kakao.maps.load(() => {
+        initMap();
+      });
+      return;
+    }
 
-      if (window.kakao && window.kakao.maps) {
-        clearInterval(checkKakao);
-        console.log("Kakao SDK 로드 완료!");
-
-        window.kakao.maps.load(() => {
-          console.log("kakao.maps.load() 실행됨");
-
-          if (!mapRef.current) {
-            console.error("mapRef.current 없음");
-            return;
-          }
-
-          const options = {
-            center: new window.kakao.maps.LatLng(center.lat, center.lng),
-            level: zoom,
-          };
-
-          const map = new window.kakao.maps.Map(mapRef.current, options);
-          mapInstanceRef.current = map;
-          setIsLoaded(true);
-          console.log("지도 생성 완료!");
-
-          window.kakao.maps.event.addListener(map, "center_changed", () => {
-            const latlng = map.getCenter();
-            setCenter(latlng.getLat(), latlng.getLng());
-          });
-
-          window.kakao.maps.event.addListener(map, "zoom_changed", () => {
-            setZoom(map.getLevel());
-          });
-        });
-      }
-    }, 100);
-
-    return () => clearInterval(checkKakao);
+    const script = document.createElement('script');
+    script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${import.meta.env.VITE_KAKAO_MAP_KEY}&autoload=false&libraries=services,clusterer`;
+    script.onload = () => {
+      window.kakao.maps.load(() => {
+        initMap();
+      });
+    };
+    document.head.appendChild(script);
   }, []);
 
-  // 마커 표시
+// 지도 초기화 함수
+  const initMap = () => {
+    if (!mapRef.current) return;
+
+    const options = {
+      center: new window.kakao.maps.LatLng(center.lat, center.lng),
+      level: zoom,
+    };
+
+    const map = new window.kakao.maps.Map(mapRef.current, options);
+    mapInstanceRef.current = map;
+    setIsLoaded(true);
+
+    window.kakao.maps.event.addListener(map, "center_changed", () => {
+      const latlng = map.getCenter();
+      setCenter(latlng.getLat(), latlng.getLng());
+    });
+
+    window.kakao.maps.event.addListener(map, "zoom_changed", () => {
+      setZoom(map.getLevel());
+    });
+  };
+
+  // 마커 + 클러스터 표시
   useEffect(() => {
-    if (!mapInstanceRef.current || !isLoaded) return;
+    if (!mapInstanceRef.current || !isLoaded || places.length === 0) return;
 
-    markersRef.current.forEach((marker) => marker.setMap(null));
-    markersRef.current = [];
+    // 기존 클러스터러 제거
+    if (clustererRef.current) {
+      clustererRef.current.clear();
+    }
 
-    places.forEach((place) => {
+    // 마커 생성
+    const markers = places.map((place) => {
       const position = new window.kakao.maps.LatLng(place.latitude, place.longitude);
       
       const marker = new window.kakao.maps.Marker({
         position,
-        map: mapInstanceRef.current,
       });
 
       window.kakao.maps.event.addListener(marker, 'click', () => {
-        open(place)  
-      })
+        open(place);
+      });
 
-      markersRef.current.push(marker);
+      return marker;
+    });
+
+    // 클러스터러 생성
+    clustererRef.current = new window.kakao.maps.MarkerClusterer({
+      map: mapInstanceRef.current,
+      averageCenter: true,
+      minLevel: 6,
+      markers: markers,
     });
   }, [isLoaded, places]);
-
 
   // 관광지 데이터 가져오기
   useEffect(() => {
