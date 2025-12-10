@@ -1,6 +1,11 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { MainPage, ShortsListPage, ShortsViewerPage, UploadPage } from "@/pages";
+import {
+  MainPage,
+  ShortsListPage,
+  ShortsViewerPage,
+  UploadPage,
+} from "@/pages";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -15,7 +20,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <div className="max-w-md mx-auto bg-white min-h-screen">
+        <div className="w-full bg-white min-h-screen">
           <Routes>
             <Route path="/" element={<MainPage />} />
             <Route path="/shorts" element={<ShortsListPage />} />

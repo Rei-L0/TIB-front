@@ -100,6 +100,15 @@ export const MapView = () => {
     });
   }, [isLoaded, places]);
 
+  // 지도 중심 이동 (center 변경 시)
+  useEffect(() => {
+    if (!mapInstanceRef.current || !isLoaded) return;
+
+    const newCenter = new window.kakao.maps.LatLng(center.lat, center.lng);
+    mapInstanceRef.current.setCenter(newCenter);
+    mapInstanceRef.current.setLevel(zoom);
+  }, [center, isLoaded]);
+
   // 관광지 데이터 가져오기
   useEffect(() => {
     // fetchPlaces().then((data) => {

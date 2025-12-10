@@ -23,12 +23,12 @@ interface MapStore {
   setZoom: (zoom: number) => void;
   setSelectedSpot: (id: string | null) => void;
   setFilters: (filters: Partial<MapStore["filters"]>) => void;
-  fetchNearbyPlaces: (lat: number, lng: number) => Promise<void>;
+  fetchNearbyPlaces: () => Promise<void>;
   fetchSearchPlaces: (keyword: string) => Promise<void>;
   fetchSelectPlace: (place: TouristSpot) => void;
 }
 
-export const useMapStore = create<MapStore>((set) => ({
+export const useMapStore = create<MapStore>((set, get) => ({
   center: { lat: 35.1796, lng: 129.0756 }, // 부산 기본값
   zoom: 9,
   selectedSpotId: null,
@@ -52,13 +52,14 @@ export const useMapStore = create<MapStore>((set) => ({
       filters: { ...state.filters, ...filters },
     })),
 
-  fetchNearbyPlaces: async (lat, lng) => {
+  fetchNearbyPlaces: async () => {
+    const { center } = get();
     useBottomSheetStore.getState().setMode("nearby");
     useBottomSheetStore.getState().setState("middle");
 
     set({ isLoading: true });
     try {
-      const { data } = await attractionApi.getNearby(lat, lng);
+      const { data } = await attractionApi.getNearby(center.lat, center.lng);
       set({ places: data });
     } catch (error) {
       console.error(error);
@@ -114,8 +115,12 @@ export const useMapStore = create<MapStore>((set) => ({
     set({
       center: { lat: place.latitude, lng: place.longitude },
       places: [place],
+      zoom: 4,
       keyword: place.name,
       isSearchOpen: false,
     });
+    useBottomSheetStore.getState().setSpot(place);
+    useBottomSheetStore.getState().setMode("spot");
+    useBottomSheetStore.getState().setState("middle");
   },
 }));
