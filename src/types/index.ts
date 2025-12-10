@@ -80,3 +80,5 @@ export interface RelatedParams {
   longitude?: number;
   radius?: number;
 }
+
+export * from "./attraction";

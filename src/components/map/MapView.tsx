@@ -5,6 +5,7 @@ import type { TouristSpot } from "@/types";
 declare global {
   interface Window {
     kakao: any;
+    moveMapTo?: (lat: number, lng: number, zoom?: number) => void;
   }
 }
 
@@ -43,7 +44,6 @@ export const MapView = () => {
   // 지도 초기화 함수
   const initMap = () => {
     if (!mapRef.current) return;
-
     const options = {
       center: new window.kakao.maps.LatLng(center.lat, center.lng),
       level: zoom,
@@ -53,6 +53,15 @@ export const MapView = () => {
     mapInstanceRef.current = map;
     setIsLoaded(true);
 
+    window.moveMapTo = (lat: number, lng: number, zoomLevel?: number) => {
+      setTimeout(() => {
+        const newCenter = new window.kakao.maps.LatLng(lat, lng);
+        map.setCenter(newCenter);
+        if (zoomLevel) {
+          map.setLevel(zoomLevel);
+        }
+      }, 100);
+    };
     window.kakao.maps.event.addListener(map, "center_changed", () => {
       const latlng = map.getCenter();
       setCenter(latlng.getLat(), latlng.getLng());
@@ -99,15 +108,6 @@ export const MapView = () => {
       markers: markers,
     });
   }, [isLoaded, places]);
-
-  // 지도 중심 이동 (center 변경 시)
-  useEffect(() => {
-    if (!mapInstanceRef.current || !isLoaded) return;
-
-    const newCenter = new window.kakao.maps.LatLng(center.lat, center.lng);
-    mapInstanceRef.current.setCenter(newCenter);
-    mapInstanceRef.current.setLevel(zoom);
-  }, [center, isLoaded]);
 
   // 관광지 데이터 가져오기
   useEffect(() => {

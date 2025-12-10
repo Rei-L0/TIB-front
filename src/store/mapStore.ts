@@ -3,6 +3,23 @@ import type { Weather, Season, TouristSpot } from "@/types";
 import { useBottomSheetStore } from "@/store";
 import { attractionApi } from "@/api";
 
+const RADIUS_BY_ZOOM: Record<number, number> = {
+  1: 1000,
+  2: 2000,
+  3: 5000,
+  4: 10000,
+  5: 20000,
+  6: 30000,
+  7: 50000,
+  8: 100000,
+  9: 200000,
+  10: 300000,
+  11: 500000,
+  12: 700000,
+  13: 1000000,
+  14: 1500000,
+};
+
 interface MapStore {
   center: { lat: number; lng: number };
   zoom: number;
@@ -53,14 +70,35 @@ export const useMapStore = create<MapStore>((set, get) => ({
     })),
 
   fetchNearbyPlaces: async () => {
-    const { center } = get();
+    const { center, zoom } = get();
+    const radius = RADIUS_BY_ZOOM[zoom] || 5000;
     useBottomSheetStore.getState().setMode("nearby");
     useBottomSheetStore.getState().setState("middle");
 
     set({ isLoading: true });
     try {
-      const { data } = await attractionApi.getNearby(center.lat, center.lng);
-      set({ places: data });
+      const { data } = await attractionApi.getNearby({
+        latitude: center.lat,
+        longitude: center.lng,
+        radius,
+      });
+
+      console.log("api호출: " + data);
+
+      const places: TouristSpot[] = data.attractions.map((item) => ({
+        id: String(item.contentId),
+        name: item.title,
+        address: `${item.sidoName} ${item.gugunName}`,
+        description: item.overview,
+        thumbnailUrl: item.firstImage,
+        latitude: data.center.latitude,
+        longitude: data.center.longitude,
+        shortsCount: item.shortsCount,
+        category: item.contentTypeName,
+      }));
+
+      console.log("places변환:", places);
+      set({ places });
     } catch (error) {
       console.error(error);
     } finally {
@@ -76,51 +114,66 @@ export const useMapStore = create<MapStore>((set, get) => ({
 
     set({ isLoading: true, keyword });
     try {
-      // const { data } = await attractionApi.search(keyword);
-      // set({ searchResults: data, isSearchOpen: true });
+      const { data } = await attractionApi.getList(keyword);
+      console.log("검색 응답:", data);
 
-      // 임시 더미
-      const mockResults: TouristSpot[] = [
-        {
-          id: "1",
-          name: "감천문화마을",
-          latitude: 35.0975,
-          longitude: 129.0108,
-          address: "부산 사하구 감내2로 203",
-          description: "알록달록 벽화마을",
-          thumbnailUrl: "",
-          tags: ["마을", "사진"],
-          shortsCount: 30,
-        },
-        {
-          id: "2",
-          name: "해운대해수욕장",
-          latitude: 35.1587,
-          longitude: 129.1604,
-          address: "부산 해운대구 해운대해변로 264",
-          description: "부산 대표 해수욕장",
-          thumbnailUrl: "",
-          tags: ["해변", "여름"],
-          shortsCount: 25,
-        },
-      ];
-      set({ searchResults: mockResults, isSearchOpen: true });
+      const searchResults: TouristSpot[] = data.attractions.content.map(
+        (item) => ({
+          id: String(item.contentId),
+          name: item.title,
+          address: item.addr1 + (item.addr2 ? ` ${item.addr2}` : ""),
+          latitude: item.latitude,
+          longitude: item.longitude,
+          thumbnailUrl: item.firstImage,
+          shortsCount: item.shortsCount,
+          category: `${item.sidoName} ${item.gugunName}`,
+        })
+      );
+      set({ searchResults });
     } catch (error) {
       console.error("검색 실패:", error);
     } finally {
       set({ isLoading: false });
     }
   },
-  fetchSelectPlace: (place) => {
-    set({
-      center: { lat: place.latitude, lng: place.longitude },
-      places: [place],
-      zoom: 4,
-      keyword: place.name,
-      isSearchOpen: false,
-    });
-    useBottomSheetStore.getState().setSpot(place);
-    useBottomSheetStore.getState().setMode("spot");
-    useBottomSheetStore.getState().setState("middle");
+  fetchSelectPlace: async (place) => {
+    set({ isLoading: true });
+
+    try {
+      // 상세 조회 API 호출
+      const { data } = await attractionApi.getDetail(Number(place.id));
+      console.log("상세 응답:", data);
+
+      // API 응답 → TouristSpot 변환
+      const detailSpot: TouristSpot = {
+        id: String(data.contentId),
+        name: data.title,
+        address: data.addr1 + (data.addr2 ? ` ${data.addr2}` : ""),
+        description: data.description?.overview,
+        latitude: data.latitude,
+        longitude: data.longitude,
+        thumbnailUrl: data.firstImage,
+        shortsCount: data.shortsCount,
+        category: `${data.sidoName} ${data.gugunName}`,
+      };
+
+      set({
+        places: [detailSpot],
+        keyword: detailSpot.name,
+        isSearchOpen: false,
+      });
+
+      useBottomSheetStore.getState().setSpot(detailSpot);
+      useBottomSheetStore.getState().setMode("spot");
+      useBottomSheetStore.getState().setState("middle");
+
+      setTimeout(() => {
+        window.moveMapTo?.(detailSpot.latitude, detailSpot.longitude, 4);
+      }, 100);
+    } catch (error) {
+      console.error("상세 조회 실패:", error);
+    } finally {
+      set({ isLoading: false });
+    }
   },
 }));
