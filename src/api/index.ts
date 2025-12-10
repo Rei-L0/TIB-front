@@ -91,16 +91,22 @@ export const shortsApi = {
 // 관광지 API
 export const spotsApi = {
   getNearby: async (lat: number, lng: number, radius = 1000) => {
-    const { data } = await apiClient.get<TouristSpot[]>("/tourist-spots/nearby", {
-      params: { latitude: lat, longitude: lng, radius },
-    });
+    const { data } = await apiClient.get<TouristSpot[]>(
+      "/tourist-spots/nearby",
+      {
+        params: { latitude: lat, longitude: lng, radius },
+      }
+    );
     return data;
   },
 
   search: async (keyword: string) => {
-    const { data } = await apiClient.get<TouristSpot[]>("/tourist-spots/search", {
-      params: { keyword },
-    });
+    const { data } = await apiClient.get<TouristSpot[]>(
+      "/tourist-spots/search",
+      {
+        params: { keyword },
+      }
+    );
     return data;
   },
 
@@ -129,7 +135,11 @@ export const mapApi = {
 
 // 영상 업로드 API
 export const videosApi = {
-  getUploadUrl: async (fileName: string, fileType: string, fileSize: number) => {
+  getUploadUrl: async (
+    fileName: string,
+    fileType: string,
+    fileSize: number
+  ) => {
     const { data } = await apiClient.post<{
       uploadUrl: string;
       fileKey: string;
@@ -137,7 +147,11 @@ export const videosApi = {
     return data;
   },
 
-  uploadToS3: async (uploadUrl: string, file: File, onProgress?: (progress: number) => void) => {
+  uploadToS3: async (
+    uploadUrl: string,
+    file: File,
+    onProgress?: (progress: number) => void
+  ) => {
     await axios.put(uploadUrl, file, {
       headers: { "Content-Type": file.type },
       onUploadProgress: (e) => {
@@ -172,5 +186,5 @@ export const videosApi = {
     return data;
   },
 };
-
+export { attractionApi } from "./attractionApi";
 export default apiClient;

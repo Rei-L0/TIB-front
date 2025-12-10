@@ -1,12 +1,18 @@
 import { useEffect } from "react";
-import { Layers, Compass } from "lucide-react";
-import { BottomNav, DraggableBottomSheet, SpotInfo, ShortsGrid } from "@/components/common";
+import {
+  BottomNav,
+  DraggableBottomSheet,
+  SpotInfo,
+  ShortsGrid,
+} from "@/components/common";
+import { Layers, Compass, MapPin } from "lucide-react";
 import { MapView } from "@/components/map/MapView";
 import { useBottomSheetStore } from "@/store";
 import { SearchBar } from "@/components/map/SearchBar";
 import { FilterButtons } from "@/components/map/FilterButtons";
 import { useNavigate } from "react-router-dom";
 import { dummyShorts, getShortsBySpotId } from "@/data/dummyData";
+import { MapControls } from "@/components/map/MapControls";
 
 // 더미 데이터
 const dummySpot = {
@@ -58,14 +64,7 @@ export const MainPage = () => {
       <SearchBar />
 
       {/* 우측 컨트롤 */}
-      <div className="absolute top-32 right-4 flex flex-col gap-2 z-30">
-        <button className="w-10 h-10 bg-white rounded-xl shadow-md flex items-center justify-center">
-          <Layers size={18} className="text-gray-600" />
-        </button>
-        <button className="w-10 h-10 bg-white rounded-xl shadow-md flex items-center justify-center">
-          <Compass size={18} className="text-gray-600" />
-        </button>
-      </div>
+      <MapControls />
 
       {/* 필터 */}
       <FilterButtons />
@@ -81,8 +80,13 @@ export const MainPage = () => {
               tags={spot.tags}
             />
           )
-        }>
-        <ShortsGrid shorts={shorts} onViewAll={handleViewAll} onItemClick={handleShortsClick} />
+        }
+      >
+        <ShortsGrid
+          shorts={shorts}
+          onViewAll={handleViewAll}
+          onItemClick={handleShortsClick}
+        />
       </DraggableBottomSheet>
 
       {/* 하단 네비게이션 */}
