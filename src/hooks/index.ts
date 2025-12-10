@@ -9,9 +9,10 @@ export const useBottomSheet = (initialState: BottomSheetState = "middle") => {
   const [dragStart, setDragStart] = useState<number | null>(null);
   const [currentY, setCurrentY] = useState(0);
 
+  // src/hooks/index.ts
   const heights: Record<BottomSheetState, number> = {
-    min: 70,
-    middle: 320,
+    min: 50,
+    middle: 280, // 320 → 280으로 줄임
     max: 560,
   };
 
@@ -44,7 +45,7 @@ export const useBottomSheet = (initialState: BottomSheetState = "middle") => {
     setCurrentY(0);
   }, [dragStart, currentY, state]);
 
-  const currentHeight = Math.max(70, Math.min(560, heights[state] + currentY));
+  const currentHeight = Math.max(heights.min, Math.min(560, heights[state] + currentY));
 
   return {
     state,
