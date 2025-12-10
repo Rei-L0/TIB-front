@@ -1,11 +1,10 @@
 import { useEffect } from "react";
-<<<<<<< Updated upstream
-import { Layers, Compass } from "lucide-react";
-import { BottomNav, DraggableBottomSheet, SpotInfo, ShortsGrid } from "@/components/common";
-=======
-import { BottomNav, DraggableBottomSheet, SpotInfo, ShortsGrid } from "@/components/common";
-import { Layers, Compass, MapPin } from "lucide-react";
->>>>>>> Stashed changes
+import {
+  BottomNav,
+  DraggableBottomSheet,
+  SpotInfo,
+  ShortsGrid,
+} from "@/components/common";
 import { MapView } from "@/components/map/MapView";
 import { useBottomSheetStore } from "@/store";
 import { SearchBar } from "@/components/map/SearchBar";
@@ -80,8 +79,13 @@ export const MainPage = () => {
               tags={spot.tags}
             />
           )
-        }>
-        <ShortsGrid shorts={shorts} onViewAll={handleViewAll} onItemClick={handleShortsClick} />
+        }
+      >
+        <ShortsGrid
+          shorts={shorts}
+          onViewAll={handleViewAll}
+          onItemClick={handleShortsClick}
+        />
       </DraggableBottomSheet>
 
       {/* 하단 네비게이션 */}

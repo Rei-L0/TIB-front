@@ -1,12 +1,11 @@
 import { MapPin } from "lucide-react";
-import { useBottomSheetStore, useMapStore } from "@/store";
+import { useMapStore } from "@/store";
 
 export const MapControls = () => {
-  const { setState } = useBottomSheetStore();
-  const { center, setPlaces, fetchNearbyPlaces } = useMapStore();
+  const { fetchNearbyPlaces } = useMapStore();
 
   const handleNearbySpots = () => {
-    fetchNearbyPlaces(center.lat, center.lng);
+    fetchNearbyPlaces();
   };
 
   return (
