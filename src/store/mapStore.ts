@@ -22,7 +22,7 @@ interface MapStore {
 
 export const useMapStore = create<MapStore>((set) => ({
   center: { lat: 35.1796, lng: 129.0756 }, // 부산 기본값
-  zoom: 15,
+  zoom: 9,
   selectedSpotId: null,
   filters: {
     weather: null,
