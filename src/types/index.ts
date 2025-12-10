@@ -17,13 +17,14 @@ export interface Shorts {
 export interface TouristSpot {
   id: string;
   name: string;
+  category?: string; // 이거 추가
   address: string;
-  description: string;
+  description?: string;
   latitude: number;
   longitude: number;
-  thumbnailUrl: string;
-  shortsCount: number;
-  tags: string[];
+  thumbnailUrl?: string;
+  shortsCount?: number;
+  tags?: string[];
 }
 
 // 날씨/계절
