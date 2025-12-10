@@ -14,10 +14,13 @@ export const DraggableBottomSheet = ({
   children,
   initialState = "middle",
 }: DraggableBottomSheetProps) => {
-  const { state, currentHeight, isDragging, handlers } =
-    useBottomSheet(initialState);
+  const { state, currentHeight, isDragging, handlers } = useBottomSheet(initialState);
+<<<<<<< Updated upstream
+=======
   const { mode } = useBottomSheetStore();
   const { searchResults, keyword, fetchSelectPlace } = useMapStore();
+>>>>>>> Stashed changes
+
   useEffect(() => {
     if (!isDragging) return;
 
@@ -38,6 +41,8 @@ export const DraggableBottomSheet = ({
     };
   }, [isDragging, handlers]);
 
+<<<<<<< Updated upstream
+=======
   const renderContent = () => {
     if (mode === "search" || mode === "nearby") {
       return (
@@ -46,8 +51,7 @@ export const DraggableBottomSheet = ({
             <button
               key={place.id}
               onClick={() => fetchSelectPlace(place)}
-              className="w-full p-3 bg-gray-50 rounded-xl text-left hover:bg-gray-100 transition"
-            >
+              className="w-full p-3 bg-gray-50 rounded-xl text-left hover:bg-gray-100 transition">
               <p className="font-medium text-gray-900">{place.name}</p>
               <p className="text-sm text-gray-500">{place.address}</p>
             </button>
@@ -58,16 +62,18 @@ export const DraggableBottomSheet = ({
 
     return null;
   };
+
+>>>>>>> Stashed changes
   return (
     <div
-      className={`fixed left-0 right-0 bg-white rounded-t-3xl shadow-2xl z-40 transition-all duration-300 ease-out overflow-hidden ${
+      className={`fixed left-0 right-0 bg-white rounded-t-3xl shadow-2xl z-40 transition-all duration-300 ease-out overflow-hidden flex flex-col ${
         state === "max" ? "bottom-0" : "bottom-12"
       }`}
       style={{ height: currentHeight }}
     >
       {/* 드래그 핸들 */}
       <div
-        className="w-full py-2 cursor-grab active:cursor-grabbing"
+        className="w-full py-2 cursor-grab active:cursor-grabbing shrink-0"
         onMouseDown={handlers.onMouseDown}
         onTouchStart={handlers.onTouchStart}
         onTouchMove={handlers.onTouchMove}
@@ -76,23 +82,9 @@ export const DraggableBottomSheet = ({
         <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto" />
       </div>
 
-      {/* 검색/주변 모드일 때 */}
-      {mode === "search" && (
-        <>
-          {(state === "middle" || state === "max") && (
-            <div
-              className={`px-5 ${
-                state === "max" ? "overflow-y-auto" : "overflow-hidden"
-              }`}
-              style={{
-                height: state === "max" ? "calc(100% - 120px)" : "150px",
-              }}
-            >
-              {renderContent()}
-            </div>
-          )}
-        </>
-      )}
+<<<<<<< Updated upstream
+      {/* 헤더 영역 */}
+      {header && <div className="px-5 pb-3">{header}</div>}
 
       {/* 주변 관광지 모드일 때 - 영상만 */}
       {mode === "nearby" && (state === "middle" || state === "max") && (
@@ -105,25 +97,34 @@ export const DraggableBottomSheet = ({
           {children}
         </div>
       )}
+=======
+      {/* 검색 모드일 때 */}
+      {mode === "search" && (state === "middle" || state === "max") && (
+        <div className={`px-5 flex-1 ${state === "max" ? "overflow-y-auto" : "overflow-hidden"}`}>
+          {renderContent()}
+        </div>
+      )}
+
+      {/* 주변 관광지 모드일 때 - 영상만 */}
+      {mode === "nearby" && (state === "middle" || state === "max") && (
+        <div className={`px-5 flex-1 ${state === "max" ? "overflow-y-auto" : "overflow-hidden"}`}>
+          {children}
+        </div>
+      )}
 
       {/* 기본 모드일 때 (기존 header, children) */}
       {mode === "spot" && (
         <>
-          {header && <div className="px-5 pb-3">{header}</div>}
+          {header && <div className="px-5 pb-3 shrink-0">{header}</div>}
           {children && (state === "middle" || state === "max") && (
             <div
-              className={`px-5 ${
-                state === "max" ? "overflow-y-auto" : "overflow-hidden"
-              }`}
-              style={{
-                height: state === "max" ? "calc(100% - 120px)" : "150px",
-              }}
-            >
+              className={`px-5 flex-1 ${state === "max" ? "overflow-y-auto" : "overflow-hidden"}`}>
               {children}
             </div>
           )}
         </>
       )}
+>>>>>>> Stashed changes
     </div>
   );
 };

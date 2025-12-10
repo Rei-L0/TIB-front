@@ -1,10 +1,61 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { X, Check, MapPin, Sun, Cloud, Snowflake, Upload as UploadIcon, Image } from "lucide-react";
+import { X, Check, MapPin, Sun, Cloud, Snowflake, Upload as UploadIcon } from "lucide-react";
 import { useUploadStore } from "@/store";
 import { useVideoMetadata } from "@/hooks";
 import { videosApi } from "@/api";
 import type { Weather, Season } from "@/types";
+
+const getAddressFromCoords = async (lat: number, lng: number): Promise<string> => {
+  try {
+    // 1. 먼저 주소 변환 시도
+    const addressRes = await fetch(
+      `https://dapi.kakao.com/v2/local/geo/coord2address.json?x=${lng}&y=${lat}`,
+      {
+        headers: {
+          Authorization: `KakaoAK ${import.meta.env.VITE_KAKAO_REST_KEY}`,
+        },
+      }
+    );
+    const addressData = await addressRes.json();
+
+    if (addressData.documents?.length > 0) {
+      const doc = addressData.documents[0];
+      return doc.road_address?.address_name || doc.address?.address_name;
+    }
+
+    // 2. 주소 없으면 행정구역 조회 (바다/산간도 됨)
+    const regionRes = await fetch(
+      `https://dapi.kakao.com/v2/local/geo/coord2regioncode.json?x=${lng}&y=${lat}`,
+      {
+        headers: {
+          Authorization: `KakaoAK ${import.meta.env.VITE_KAKAO_REST_KEY}`,
+        },
+      }
+    );
+    const regionData = await regionRes.json();
+
+    if (regionData.documents?.length > 0) {
+      const doc = regionData.documents[0];
+      return doc.address_name; // "부산광역시 기장군" 이런 식
+    }
+
+    return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+  } catch {
+    return "주소 변환 실패";
+  }
+};
+
+// 더미 관광지 데이터 (나중에 API로 대체)
+const getNearbySpots = async (lat: number, lng: number) => {
+  // TODO: 실제 API 호출로 대체
+  // GET /api/spots/nearby?lat=${lat}&lng=${lng}&radius=500
+  return [
+    { id: "1", name: "해운대 해수욕장", distance: 50 },
+    { id: "2", name: "해운대 블루라인파크", distance: 320 },
+    { id: "3", name: "동백섬", distance: 480 },
+  ];
+};
 
 export const UploadPage = () => {
   const navigate = useNavigate();
@@ -32,6 +83,10 @@ export const UploadPage = () => {
   const [thumbnail, setThumbnail] = useState<string | null>(null);
   const [extractedLocation, setExtractedLocation] = useState<string | null>(null);
   const [extractedDate, setExtractedDate] = useState<string | null>(null);
+  const [nearbySpots, setNearbySpots] = useState<{ id: string; name: string; distance: number }[]>(
+    []
+  );
+  const [selectedSpotId, setSelectedSpotId] = useState<string | null>(null);
 
   // 파일 선택
   const handleFileSelect = useCallback(
@@ -39,22 +94,28 @@ export const UploadPage = () => {
       const selectedFile = e.target.files?.[0];
       if (!selectedFile) return;
 
-      console.log("=== 파일 선택됨 ===");
       setFile(selectedFile);
 
       try {
-        // 메타데이터 추출
         const meta = await extractMetadata(selectedFile);
         setMetadata(meta);
 
-        // 위치 정보 표시
+        // 위치 정보 → 주소 변환
         if (meta.latitude && meta.longitude) {
-          setExtractedLocation(`${meta.latitude.toFixed(4)}, ${meta.longitude.toFixed(4)}`);
+          const address = await getAddressFromCoords(meta.latitude, meta.longitude);
+          setExtractedLocation(address);
+
+          // 근처 관광지 조회
+          const spots = await getNearbySpots(meta.latitude, meta.longitude);
+          setNearbySpots(spots);
+          if (spots.length > 0) {
+            setSelectedSpotId(spots[0].id); // 가장 가까운 곳 자동 선택
+          }
         } else {
           setExtractedLocation("위치 정보 없음");
         }
 
-        // 날짜 정보 표시
+        // 날짜 정보
         if (meta.createdAt) {
           const date = new Date(meta.createdAt);
           setExtractedDate(date.toLocaleDateString("ko-KR"));
@@ -88,37 +149,29 @@ export const UploadPage = () => {
 
   // 업로드 실행
   const handleUpload = useCallback(async () => {
-    if (!file) return;
+    if (!file || !selectedSpotId) {
+      alert("관광지를 선택해주세요.");
+      return;
+    }
 
-    console.log("=== 업로드 시작 ===");
     setIsUploading(true);
 
     try {
-      // 1. presigned URL 발급
-      console.log("1. presigned URL 요청...");
       const { uploadUrl, fileKey } = await videosApi.getUploadUrl(file.name, file.type, file.size);
-      console.log("presigned URL 발급 완료:", fileKey);
 
-      // 2. S3 업로드
-      console.log("2. S3 업로드 시작...");
       await videosApi.uploadToS3(uploadUrl, file, (p) => {
-        console.log("업로드 진행률:", p, "%");
         setProgress(p);
       });
-      console.log("S3 업로드 완료");
 
-      // 3. 업로드 완료 처리
-      console.log("3. 업로드 완료 API 호출...");
       await videosApi.completeUpload({
         fileKey,
         title,
-        touristSpotId: "1", // TODO: 선택된 관광지 ID
+        touristSpotId: selectedSpotId,
         weather: weather || "sunny",
         season: season || "spring",
         latitude: metadata?.latitude,
         longitude: metadata?.longitude,
       });
-      console.log("업로드 완료!");
 
       alert("업로드 완료!");
       reset();
@@ -129,7 +182,18 @@ export const UploadPage = () => {
     } finally {
       setIsUploading(false);
     }
-  }, [file, title, weather, season, metadata, reset, navigate, setIsUploading, setProgress]);
+  }, [
+    file,
+    title,
+    weather,
+    season,
+    metadata,
+    selectedSpotId,
+    reset,
+    navigate,
+    setIsUploading,
+    setProgress,
+  ]);
 
   const weatherOptions: { value: Weather; icon: React.ReactNode; label: string }[] = [
     { value: "sunny", icon: <Sun size={16} />, label: "맑음" },
@@ -161,9 +225,9 @@ export const UploadPage = () => {
           <div className="w-10" />
         </div>
 
-        {/* 스텝 인디케이터 */}
+        {/* 스텝 인디케이터 - 2단계로 축소 */}
         <div className="flex items-center gap-2 mt-4">
-          {[1, 2, 3].map((s) => (
+          {[1, 2].map((s) => (
             <div key={s} className="flex-1 flex items-center gap-2">
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
@@ -171,7 +235,7 @@ export const UploadPage = () => {
                 }`}>
                 {step > s ? <Check size={16} /> : s}
               </div>
-              {s < 3 && (
+              {s < 2 && (
                 <div
                   className={`flex-1 h-1 rounded ${step > s ? "bg-emerald-500" : "bg-gray-200"}`}
                 />
@@ -208,7 +272,7 @@ export const UploadPage = () => {
                 <img src={thumbnail} alt="썸네일" className="w-full h-full object-contain" />
               </div>
               <p className="text-sm text-gray-500 mt-2">
-                {file?.name} ({(file?.size || 0 / 1024 / 1024).toFixed(2)} MB)
+                {file?.name} ({((file?.size || 0) / 1024 / 1024).toFixed(2)} MB)
               </p>
             </div>
           )}
@@ -231,7 +295,9 @@ export const UploadPage = () => {
               </div>
               <div className="bg-white rounded-xl p-3">
                 <p className="text-xs text-gray-500">촬영 위치</p>
-                <p className="font-bold text-gray-900 text-sm">{extractedLocation || "-"}</p>
+                <p className="font-bold text-gray-900 text-sm truncate">
+                  {extractedLocation || "-"}
+                </p>
               </div>
               <div className="bg-white rounded-xl p-3">
                 <p className="text-xs text-gray-500">촬영 일시</p>
@@ -243,18 +309,46 @@ export const UploadPage = () => {
           {/* 관광지 선택 */}
           <div className="bg-white rounded-2xl p-4 mb-4">
             <p className="font-bold text-gray-900 mb-3">📍 관광지 선택</p>
-            <div className="p-3 border-2 border-emerald-500 rounded-xl flex items-center justify-between bg-emerald-50">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-                  <MapPin size={20} className="text-emerald-500" />
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">해운대 해수욕장</p>
-                  <p className="text-xs text-emerald-600">AI 추천</p>
-                </div>
+            {nearbySpots.length > 0 ? (
+              <div className="space-y-2">
+                {nearbySpots.map((spot, index) => (
+                  <button
+                    key={spot.id}
+                    onClick={() => setSelectedSpotId(spot.id)}
+                    className={`w-full p-3 rounded-xl flex items-center justify-between ${
+                      selectedSpotId === spot.id
+                        ? "border-2 border-emerald-500 bg-emerald-50"
+                        : "border border-gray-200"
+                    }`}>
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                          selectedSpotId === spot.id ? "bg-emerald-100" : "bg-gray-100"
+                        }`}>
+                        <MapPin
+                          size={20}
+                          className={
+                            selectedSpotId === spot.id ? "text-emerald-500" : "text-gray-400"
+                          }
+                        />
+                      </div>
+                      <div className="text-left">
+                        <p className="font-medium text-gray-900">{spot.name}</p>
+                        <p className="text-xs text-gray-500">{spot.distance}m 거리</p>
+                      </div>
+                    </div>
+                    {selectedSpotId === spot.id && <Check size={20} className="text-emerald-500" />}
+                    {index === 0 && selectedSpotId === spot.id && (
+                      <span className="text-xs text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">
+                        가장 가까움
+                      </span>
+                    )}
+                  </button>
+                ))}
               </div>
-              <Check size={20} className="text-emerald-500" />
-            </div>
+            ) : (
+              <p className="text-gray-500 text-sm">위치 정보가 없어 관광지를 찾을 수 없습니다.</p>
+            )}
           </div>
 
           {/* 날씨 선택 */}
@@ -309,27 +403,6 @@ export const UploadPage = () => {
         </div>
       )}
 
-      {/* Step 3: 언어 설정 */}
-      {step === 3 && (
-        <div className="p-4">
-          <div className="bg-white rounded-2xl p-4">
-            <p className="font-bold text-gray-900 mb-3">🌐 번역 언어</p>
-            {["English", "日本語", "中文"].map((lang, i) => (
-              <label
-                key={lang}
-                className="flex items-center gap-3 p-3 border border-gray-200 rounded-xl mb-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  defaultChecked={i < 2}
-                  className="w-5 h-5 accent-emerald-500"
-                />
-                <span className="font-medium text-gray-900">{lang}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* 하단 버튼 */}
       <div className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100">
         {isUploading ? (
@@ -346,18 +419,18 @@ export const UploadPage = () => {
           <div className="flex gap-3">
             {step > 1 && (
               <button
-                onClick={() => setStep((step - 1) as 1 | 2 | 3)}
+                onClick={() => setStep(1)}
                 className="flex-1 py-3.5 border border-gray-300 rounded-2xl font-bold text-gray-600">
                 이전
               </button>
             )}
             <button
-              onClick={() => {
-                if (step < 3) setStep((step + 1) as 1 | 2 | 3);
-                else handleUpload();
-              }}
-              className="flex-1 py-3.5 bg-emerald-500 rounded-2xl font-bold text-white">
-              {step === 3 ? "업로드" : "다음"}
+              onClick={step === 2 ? handleUpload : undefined}
+              disabled={step === 2 && !selectedSpotId}
+              className={`flex-1 py-3.5 rounded-2xl font-bold text-white ${
+                step === 2 && !selectedSpotId ? "bg-gray-300" : "bg-emerald-500"
+              }`}>
+              업로드
             </button>
           </div>
         )}
