@@ -110,7 +110,7 @@ export const useMapStore = create<MapStore>((set, get) => ({
     if (!keyword.trim()) return;
 
     useBottomSheetStore.getState().setMode("search");
-    useBottomSheetStore.getState().setState("middle");
+    useBottomSheetStore.getState().setState("max");
 
     set({ isLoading: true, keyword });
     try {

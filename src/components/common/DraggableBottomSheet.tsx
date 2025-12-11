@@ -41,7 +41,7 @@ export const DraggableBottomSheet = ({
   }, [isDragging, handlers]);
 
   const renderContent = () => {
-    if (mode === "search" || mode === "nearby") {
+    if (mode === "search") {
       return (
         <div className="flex flex-col gap-2">
           {searchResults.map((place) => (
@@ -81,13 +81,7 @@ export const DraggableBottomSheet = ({
 
       {/* 검색 모드일 때 */}
       {mode === "search" && (state === "middle" || state === "max") && (
-        <div
-          className={`px-5 flex-1 ${
-            state === "max" ? "overflow-y-auto" : "overflow-hidden"
-          }`}
-        >
-          {renderContent()}
-        </div>
+        <div className={"px-5 flex-1 overflow-y-auto"}>{renderContent()}</div>
       )}
 
       {/* 주변 관광지 모드일 때 - 영상만 */}
