@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { useMapStore, useBottomSheetStore } from "@/store";
-import type { TouristSpot } from "@/types";
 
 declare global {
   interface Window {

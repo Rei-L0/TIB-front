@@ -9,6 +9,7 @@ interface SpotInfoProps {
   shortsCount?: number;
   onNavigate?: () => void;
   onShare?: () => void;
+  onDetailClick?: () => void;
 }
 
 export const SpotInfo = ({
@@ -19,6 +20,7 @@ export const SpotInfo = ({
   shortsCount,
   onNavigate,
   onShare,
+  onDetailClick,
 }: SpotInfoProps) => {
   return (
     <div>
@@ -41,12 +43,20 @@ export const SpotInfo = ({
           {tags.map((tag) => (
             <span
               key={tag}
-              className="px-2.5 py-1 bg-blue-100 text-blue-600 rounded-full text-xs font-medium">
+              className="px-2.5 py-1 bg-blue-100 text-blue-600 rounded-full text-xs font-medium"
+            >
               {tag}
             </span>
           ))}
         </div>
       )}
+
+      <button
+        onClick={onDetailClick}
+        className="text-sm text-blue-500 hover:text-blue-600"
+      >
+        상세보기
+      </button>
     </div>
   );
 };

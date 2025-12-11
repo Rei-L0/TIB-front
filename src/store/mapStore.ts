@@ -155,6 +155,9 @@ export const useMapStore = create<MapStore>((set, get) => ({
         thumbnailUrl: data.firstImage,
         shortsCount: data.shortsCount,
         category: `${data.sidoName} ${data.gugunName}`,
+        homepage: data.description?.homepage,
+        tel: data.tel,
+        telname: data.description?.telname,
       };
 
       set({

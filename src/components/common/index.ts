@@ -3,3 +3,4 @@ export { ShortsGrid } from "./ShortsGrid";
 export { BottomNav } from "./BottomNav";
 export * from "./Badge";
 export * from "./DraggableBottomSheet";
+export { SpotDetail } from "./SpotDetail";

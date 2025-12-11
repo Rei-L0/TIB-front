@@ -13,8 +13,8 @@ export { useMapStore } from "./mapStore";
 interface BottomSheetStore {
   state: BottomSheetState;
   spot: TouristSpot | null;
-  mode: "spot" | "nearby" | "search";
-  setMode: (mode: "spot" | "nearby" | "search") => void;
+  mode: "spot" | "nearby" | "search" | "detail";
+  setMode: (mode: "spot" | "nearby" | "search" | "detail") => void;
   setState: (state: BottomSheetState) => void;
   setSpot: (spot: TouristSpot | null) => void;
   open: (spot: TouristSpot) => void;
