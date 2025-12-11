@@ -1,4 +1,5 @@
 // 숏츠
+// 숏츠
 export interface Shorts {
   id: string;
   title: string;
@@ -7,17 +8,18 @@ export interface Shorts {
   viewCount: number;
   likeCount: number;
   duration: number;
-  touristSpot: TouristSpot;
-  weather: Weather;
-  season: Season;
+  touristSpot?: TouristSpot; // optional로 변경
+  weather?: Weather; // optional로 변경
+  season?: Season; // optional로 변경
   createdAt: string;
+  liked?: boolean; // 추가
 }
 
 // 관광지
 export interface TouristSpot {
   id: string;
   name: string;
-  category?: string; // 이거 추가
+  category?: string;
   address: string;
   description?: string;
   latitude: number;
@@ -27,9 +29,10 @@ export interface TouristSpot {
   tags?: string[];
 }
 
-// 날씨/계절
+// 날씨/계절/테마
 export type Weather = "sunny" | "cloudy" | "rainy" | "snowy";
 export type Season = "spring" | "summer" | "fall" | "winter";
+export type Theme = "night_view" | "ocean" | "mountain" | "cafe" | "food" | "festival" | "walk";
 
 // 지도
 export interface MapBounds {
@@ -79,6 +82,54 @@ export interface RelatedParams {
   latitude?: number;
   longitude?: number;
   radius?: number;
+}
+
+// ========================
+// 업로드 API 관련 타입
+// ========================
+
+export interface UploadUrlRequest {
+  videoFileName: string;
+  videoContentType: string;
+  videoFileSize: number;
+  thumbnailFileName: string;
+  thumbnailContentType: string;
+  thumbnailFileSize: number;
+}
+
+export interface UploadUrlResponse {
+  videoUploadUrl: string;
+  videoKey: string;
+  thumbnailUploadUrl: string;
+  thumbnailKey: string;
+  expiresIn: number;
+}
+
+export interface ShortsCreateRequest {
+  videoKey: string;
+  thumbnailKey: string;
+  name: string;
+  title: string;
+  contentId?: number;
+  weather?: Weather;
+  theme?: Theme;
+  season?: Season;
+  latitude?: number;
+  longitude?: number;
+  hashtags?: string[];
+}
+
+export interface ShortsCreateResponse {
+  id: number;
+  title: string;
+  status: string;
+  createdAt: string;
+}
+
+export interface NearbyAttraction {
+  contentId: number;
+  title: string;
+  distance: number;
 }
 
 export * from "./attraction";
