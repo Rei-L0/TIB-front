@@ -17,6 +17,8 @@ export interface AttractionItem {
   firstImage: string;
   distance: number;
   shortsCount: number;
+  latitude: number;
+  longitude: number;
 }
 
 export interface SearchResponse {

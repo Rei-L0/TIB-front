@@ -4,20 +4,20 @@ import { useBottomSheetStore } from "@/store";
 import { attractionApi } from "@/api";
 
 const RADIUS_BY_ZOOM: Record<number, number> = {
-  1: 1000,
-  2: 2000,
-  3: 5000,
-  4: 10000,
-  5: 20000,
-  6: 30000,
-  7: 50000,
-  8: 100000,
-  9: 200000,
-  10: 300000,
-  11: 500000,
-  12: 700000,
-  13: 1000000,
-  14: 1500000,
+  1: 70,
+  2: 150,
+  3: 300,
+  4: 600,
+  5: 1100,
+  6: 2200,
+  7: 4400,
+  8: 8800,
+  9: 18000,
+  10: 36000,
+  11: 72000,
+  12: 144000,
+  13: 288000,
+  14: 576000,
 };
 
 interface MapStore {
@@ -83,7 +83,7 @@ export const useMapStore = create<MapStore>((set, get) => ({
         radius,
       });
 
-      console.log("api호출: " + data);
+      console.log("api호출: ", data);
 
       const places: TouristSpot[] = data.attractions.map((item) => ({
         id: String(item.contentId),
@@ -91,8 +91,8 @@ export const useMapStore = create<MapStore>((set, get) => ({
         address: `${item.sidoName} ${item.gugunName}`,
         description: item.overview,
         thumbnailUrl: item.firstImage,
-        latitude: data.center.latitude,
-        longitude: data.center.longitude,
+        latitude: item.latitude,
+        longitude: item.longitude,
         shortsCount: item.shortsCount,
         category: item.contentTypeName,
       }));
@@ -110,7 +110,7 @@ export const useMapStore = create<MapStore>((set, get) => ({
     if (!keyword.trim()) return;
 
     useBottomSheetStore.getState().setMode("search");
-    useBottomSheetStore.getState().setState("middle");
+    useBottomSheetStore.getState().setState("max");
 
     set({ isLoading: true, keyword });
     try {
