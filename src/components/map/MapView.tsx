@@ -44,6 +44,8 @@ export const MapView = () => {
   // 지도 초기화 함수
   const initMap = () => {
     if (!mapRef.current) return;
+    if (mapInstanceRef.current) return;
+
     const options = {
       center: new window.kakao.maps.LatLng(center.lat, center.lng),
       level: zoom,
