@@ -1,7 +1,8 @@
 import { create } from "zustand";
-import type { Weather, Season, TouristSpot } from "@/types";
+import type { Weather, Season, TouristSpot, Shorts } from "@/types";
 import { useBottomSheetStore } from "@/store";
 import { attractionApi } from "@/api";
+import { shortsApi } from "@/api/shorts";
 
 const RADIUS_BY_ZOOM: Record<number, number> = {
   1: 70,
@@ -34,6 +35,9 @@ interface MapStore {
   isLoading: boolean;
   searchResults: TouristSpot[];
   isSearchOpen: boolean;
+  shorts: Shorts[];
+  setShorts: (shorts: Shorts[]) => void;
+  fetchShorts: (pageNum?: number) => void;
   setKeyword: (keyword: string) => void;
   setPlaces: (places: TouristSpot[]) => void;
   setCenter: (lat: number, lng: number) => void;
@@ -59,6 +63,8 @@ export const useMapStore = create<MapStore>((set, get) => ({
   isLoading: false,
   searchResults: [],
   isSearchOpen: false,
+  shorts: [],
+  setShorts: (shorts) => set({ shorts }),
   setKeyword: (keyword) => set({ keyword }),
   setPlaces: (places) => set({ places }),
   setCenter: (lat, lng) => set({ center: { lat, lng } }),
@@ -175,6 +181,48 @@ export const useMapStore = create<MapStore>((set, get) => ({
       }, 100);
     } catch (error) {
       console.error("상세 조회 실패:", error);
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+  fetchShorts: async (pageNum = 0) => {
+    const { center, zoom } = get();
+    const radius = RADIUS_BY_ZOOM[zoom] || 5000;
+    const { mode, spot } = useBottomSheetStore.getState();
+    set({ isLoading: true });
+    try {
+      const res = await shortsApi.getList({
+        page: pageNum,
+        size: 20,
+        contentId: mode === "spot" && spot?.id ? Number(spot.id) : undefined,
+        latitude: center.lat,
+        longitude: center.lng,
+        ...(mode === "nearby" && { radius }),
+      });
+
+      const mappedShorts: Shorts[] = res.content.map((item: any) => ({
+        id: item.id,
+        title: item.title,
+        thumbnailUrl: item.thumbnailUrl,
+        viewCount: item.readcount,
+        likeCount: item.good,
+        liked: item.liked,
+        createdAt: item.createdAt,
+        videoUrl: item.videoUrl || "",
+        duration: item.duration || 0,
+      }));
+      console.log(mappedShorts);
+
+      if (pageNum === 0) {
+        set({ shorts: mappedShorts });
+      } else {
+        set((state) => ({ shorts: [...state.shorts, ...mappedShorts] }));
+      }
+
+      // setHasMore(res.page < res.totalPages - 1);
+      // setPage(pageNum);
+    } catch (err) {
+      console.error("숏츠 로드 실패:", err);
     } finally {
       set({ isLoading: false });
     }

@@ -8,7 +8,6 @@ import type {
 } from "@/types";
 
 export { useMapStore } from "./mapStore";
-// export { useShortsStore } from "./shortsStore";
 // 바텀시트 상태
 interface BottomSheetStore {
   state: BottomSheetState;
