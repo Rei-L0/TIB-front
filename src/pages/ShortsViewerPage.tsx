@@ -1,11 +1,11 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
 import type { Swiper as SwiperType } from "swiper";
 import ReactPlayer from "react-player";
 import { ArrowLeft, Heart, Share2, MapPin, Play, Volume2, VolumeX } from "lucide-react";
 import { BottomNav, WeatherBadge, SeasonBadge } from "@/components/common";
-import { dummyShorts, getShortsBySpotId, getNearbyShorts } from "@/data/dummyData";
+import { shortsApi } from "@/api/shorts";
 import type { Shorts } from "@/types";
 
 import "swiper/css";
@@ -15,32 +15,82 @@ export const ShortsViewerPage = () => {
   const location = useLocation();
   const state = location.state as {
     startIndex?: number;
-    feedType?: "feed" | "related";
+    shortsList?: Shorts[];
     spotId?: string;
     district?: string;
   } | null;
 
-  // 피드 타입에 따라 데이터 가져오기
-  const getShortsList = (): Shorts[] => {
-    if (state?.spotId) {
-      return getShortsBySpotId(state.spotId);
-    }
-    if (state?.district) {
-      return dummyShorts.filter((s) => s.touristSpot.address.includes(state.district!));
-    }
-    return dummyShorts;
-  };
-
-  const shortsList = getShortsList();
-  const initialIndex = state?.startIndex || 0;
-
-  const [activeIndex, setActiveIndex] = useState(initialIndex);
+  const [shortsList, setShortsList] = useState<Shorts[]>(state?.shortsList || []);
+  const [activeIndex, setActiveIndex] = useState(state?.startIndex || 0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
   const [likes, setLikes] = useState<Record<string, boolean>>({});
+  const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
+  const [loading, setLoading] = useState(!state?.shortsList);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+
   const swiperRef = useRef<SwiperType | null>(null);
+  const viewedRef = useRef<Set<string>>(new Set());
 
   const currentShorts = shortsList[activeIndex];
+
+  // 초기 로드
+  useEffect(() => {
+    if (!state?.shortsList) {
+      loadShorts();
+    } else {
+      // 초기 좋아요 상태 설정
+      const initialLikes: Record<string, boolean> = {};
+      const initialCounts: Record<string, number> = {};
+      state.shortsList.forEach((s) => {
+        initialLikes[s.id] = s.liked || false;
+        initialCounts[s.id] = s.likeCount;
+      });
+      setLikes(initialLikes);
+      setLikeCounts(initialCounts);
+    }
+  }, []);
+
+  // 조회수 증가
+  useEffect(() => {
+    if (currentShorts && !viewedRef.current.has(currentShorts.id)) {
+      viewedRef.current.add(currentShorts.id);
+      shortsApi.increaseViews(currentShorts.id).catch(console.error);
+    }
+  }, [currentShorts?.id]);
+
+  const loadShorts = async (pageNum = 0) => {
+    try {
+      setLoading(true);
+      const res = await shortsApi.getList({
+        page: pageNum,
+        size: 10,
+        contentId: state?.spotId ? Number(state.spotId) : undefined,
+      });
+
+      const newShorts = res.content;
+
+      if (pageNum === 0) {
+        setShortsList(newShorts);
+      } else {
+        setShortsList((prev) => [...prev, ...newShorts]);
+      }
+
+      // 좋아요 상태 설정
+      newShorts.forEach((s) => {
+        setLikes((prev) => ({ ...prev, [s.id]: s.liked || false }));
+        setLikeCounts((prev) => ({ ...prev, [s.id]: s.likeCount }));
+      });
+
+      setHasMore(res.page < res.totalPages - 1);
+      setPage(pageNum);
+    } catch (err) {
+      console.error("숏츠 로드 실패:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const formatCount = (count: number) => {
     if (count >= 10000) return `${(count / 10000).toFixed(1)}만`;
@@ -51,10 +101,21 @@ export const ShortsViewerPage = () => {
   const handleSlideChange = (swiper: SwiperType) => {
     setActiveIndex(swiper.activeIndex);
     setIsPlaying(true);
+
+    // 끝에 가까워지면 더 로드
+    if (swiper.activeIndex >= shortsList.length - 3 && hasMore && !loading) {
+      loadShorts(page + 1);
+    }
   };
 
-  const toggleLike = (id: string) => {
-    setLikes((prev) => ({ ...prev, [id]: !prev[id] }));
+  const toggleLike = async (id: string) => {
+    try {
+      const res = await shortsApi.toggleLike(id);
+      setLikes((prev) => ({ ...prev, [id]: res.liked }));
+      setLikeCounts((prev) => ({ ...prev, [id]: res.good }));
+    } catch (err) {
+      console.error("좋아요 실패:", err);
+    }
   };
 
   const togglePlay = () => {
@@ -62,10 +123,20 @@ export const ShortsViewerPage = () => {
   };
 
   const handleLocationClick = () => {
-    navigate("/", {
-      state: { spotId: currentShorts.touristSpot.id },
-    });
+    if (currentShorts?.touristSpot) {
+      navigate("/", {
+        state: { spotId: currentShorts.touristSpot.id },
+      });
+    }
   };
+
+  if (loading && shortsList.length === 0) {
+    return (
+      <div className="h-screen bg-black flex items-center justify-center text-white">
+        로딩 중...
+      </div>
+    );
+  }
 
   if (!currentShorts) {
     return (
@@ -79,14 +150,13 @@ export const ShortsViewerPage = () => {
     <div className="h-screen bg-black relative">
       <Swiper
         direction="vertical"
-        initialSlide={initialIndex}
+        initialSlide={state?.startIndex || 0}
         onSwiper={(swiper) => (swiperRef.current = swiper)}
         onSlideChange={handleSlideChange}
         className="h-full w-full">
         {shortsList.map((shorts, index) => (
           <SwiperSlide key={shorts.id}>
             <div className="relative w-full h-full" onClick={togglePlay}>
-              {/* 비디오 플레이어 */}
               <ReactPlayer
                 url={shorts.videoUrl}
                 playing={activeIndex === index && isPlaying}
@@ -105,7 +175,6 @@ export const ShortsViewerPage = () => {
                 }}
               />
 
-              {/* 재생/일시정지 오버레이 */}
               {!isPlaying && activeIndex === index && (
                 <div className="absolute inset-0 flex items-center justify-center z-10">
                   <div className="w-20 h-20 bg-white/20 backdrop-blur rounded-full flex items-center justify-center">
@@ -127,8 +196,8 @@ export const ShortsViewerPage = () => {
             <ArrowLeft size={22} className="text-white" />
           </button>
           <div className="flex items-center gap-2">
-            <WeatherBadge weather={currentShorts.weather} size="sm" />
-            <SeasonBadge season={currentShorts.season} size="sm" />
+            {currentShorts.weather && <WeatherBadge weather={currentShorts.weather} size="sm" />}
+            {currentShorts.season && <SeasonBadge season={currentShorts.season} size="sm" />}
           </div>
         </div>
       </div>
@@ -146,21 +215,24 @@ export const ShortsViewerPage = () => {
             />
           </div>
           <span className="text-white text-xs font-medium">
-            {formatCount(currentShorts.likeCount + (likes[currentShorts.id] ? 1 : 0))}
+            {formatCount(likeCounts[currentShorts.id] || currentShorts.likeCount)}
           </span>
         </button>
+
         <button className="flex flex-col items-center gap-1">
           <div className="w-12 h-12 bg-black/30 backdrop-blur rounded-full flex items-center justify-center">
             <Share2 size={24} className="text-white" />
           </div>
           <span className="text-white text-xs font-medium">공유</span>
         </button>
+
         <button onClick={handleLocationClick} className="flex flex-col items-center gap-1">
           <div className="w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center">
             <MapPin size={24} className="text-white" />
           </div>
           <span className="text-white text-xs font-medium">위치</span>
         </button>
+
         <button onClick={() => setIsMuted(!isMuted)} className="flex flex-col items-center gap-1">
           <div className="w-12 h-12 bg-black/30 backdrop-blur rounded-full flex items-center justify-center">
             {isMuted ? (
@@ -176,14 +248,17 @@ export const ShortsViewerPage = () => {
       {/* 하단 정보 */}
       <div className="absolute bottom-16 left-0 right-0 p-5 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-20">
         <h2 className="text-white text-xl font-bold mb-1">{currentShorts.title}</h2>
-        <p className="text-white/80 text-sm flex items-center gap-1 mb-2">
-          <MapPin size={14} /> {currentShorts.touristSpot.address}
-        </p>
-        <p className="text-white/60 text-sm">{currentShorts.touristSpot.description}</p>
+        {currentShorts.touristSpot && (
+          <>
+            <p className="text-white/80 text-sm flex items-center gap-1 mb-2">
+              <MapPin size={14} /> {currentShorts.touristSpot.address}
+            </p>
+            <p className="text-white/60 text-sm">{currentShorts.touristSpot.description}</p>
+          </>
+        )}
 
-        {/* 영상 인디케이터 */}
         <div className="mt-4 flex gap-1">
-          {shortsList.map((_, i) => (
+          {shortsList.slice(0, 10).map((_, i) => (
             <div
               key={i}
               className={`flex-1 h-1 rounded-full ${
@@ -194,7 +269,6 @@ export const ShortsViewerPage = () => {
         </div>
       </div>
 
-      {/* 하단 네비게이션 */}
       <BottomNav />
     </div>
   );
