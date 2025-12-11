@@ -2,7 +2,7 @@
 import { useEffect, ReactNode } from "react";
 import { useBottomSheet } from "@/hooks";
 import { useBottomSheetStore, useMapStore } from "@/store";
-
+import { SpotDetail } from "@/components/common";
 interface DraggableBottomSheetProps {
   header?: ReactNode;
   children?: ReactNode;
@@ -17,8 +17,8 @@ export const DraggableBottomSheet = ({
   const { state, currentHeight, isDragging, handlers } =
     useBottomSheet(initialState);
 
-  const { mode } = useBottomSheetStore();
-  const { searchResults, keyword, fetchSelectPlace } = useMapStore();
+  const { mode, spot } = useBottomSheetStore();
+  const { searchResults, fetchSelectPlace } = useMapStore();
 
   useEffect(() => {
     if (!isDragging) return;
@@ -109,6 +109,13 @@ export const DraggableBottomSheet = ({
             </div>
           )}
         </>
+      )}
+
+      {/* 상세 모드일 때 */}
+      {mode === "detail" && (
+        <div className="px-5 flex-1 overflow-y-auto">
+          <SpotDetail />
+        </div>
       )}
     </div>
   );

@@ -1,9 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   BottomNav,
   DraggableBottomSheet,
   SpotInfo,
   ShortsGrid,
+  SpotDetail,
 } from "@/components/common";
 import { MapView } from "@/components/map/MapView";
 import { useBottomSheetStore } from "@/store";
@@ -29,8 +30,7 @@ const dummySpot = {
 
 export const MainPage = () => {
   const navigate = useNavigate();
-  const { spot, setSpot, setState } = useBottomSheetStore();
-
+  const { spot, setSpot, setState, mode, setMode } = useBottomSheetStore();
   // 관광지별 영상
   const shorts = spot ? getShortsBySpotId(spot.id) : dummyShorts.slice(0, 4);
 
@@ -38,6 +38,7 @@ export const MainPage = () => {
   useEffect(() => {
     setSpot(dummySpot);
     setState("middle");
+    setMode("detail");
   }, []);
 
   const handleViewAll = () => {
@@ -77,6 +78,7 @@ export const MainPage = () => {
               category={spot.category}
               address={spot.address}
               tags={spot.tags}
+              onDetailClick={() => setMode(mode === "spot" ? "detail" : "spot")}
             />
           )
         }

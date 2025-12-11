@@ -25,6 +25,9 @@ export interface TouristSpot {
   thumbnailUrl?: string;
   shortsCount?: number;
   tags?: string[];
+  homepage?: string;
+  tel?: string;
+  telname?: string;
 }
 
 // 날씨/계절
