@@ -28,7 +28,7 @@ interface MapStore {
   filters: {
     weather: Weather | null;
     season: Season | null;
-    time: string | null;
+    theme: string | null;
   };
   places: TouristSpot[];
   keyword: string;
@@ -40,7 +40,10 @@ interface MapStore {
   // interface에 추가
   hoveredShorts: Shorts | null;
   hoverPosition: { x: number; y: number } | null;
-  setHoveredShorts: (shorts: Shorts | null, position?: { x: number; y: number }) => void;
+  setHoveredShorts: (
+    shorts: Shorts | null,
+    position?: { x: number; y: number }
+  ) => void;
 
   setShorts: (shorts: Shorts[]) => void;
   fetchShorts: (pageNum?: number) => void;
@@ -62,7 +65,7 @@ export const useMapStore = create<MapStore>((set, get) => ({
   filters: {
     weather: null,
     season: null,
-    time: null,
+    theme: null,
   },
   places: [],
   keyword: "",
@@ -137,16 +140,18 @@ export const useMapStore = create<MapStore>((set, get) => ({
       const { data } = await attractionApi.getList(keyword);
       console.log("검색 응답:", data);
 
-      const searchResults: TouristSpot[] = data.attractions.content.map((item) => ({
-        id: String(item.contentId),
-        name: item.title,
-        address: item.addr1 + (item.addr2 ? ` ${item.addr2}` : ""),
-        latitude: item.latitude,
-        longitude: item.longitude,
-        thumbnailUrl: item.firstImage,
-        shortsCount: item.shortsCount,
-        category: `${item.sidoName} ${item.gugunName}`,
-      }));
+      const searchResults: TouristSpot[] = data.attractions.content.map(
+        (item) => ({
+          id: String(item.contentId),
+          name: item.title,
+          address: item.addr1 + (item.addr2 ? ` ${item.addr2}` : ""),
+          latitude: item.latitude,
+          longitude: item.longitude,
+          thumbnailUrl: item.firstImage,
+          shortsCount: item.shortsCount,
+          category: `${item.sidoName} ${item.gugunName}`,
+        })
+      );
       set({ searchResults });
     } catch (error) {
       console.error("검색 실패:", error);
@@ -187,7 +192,6 @@ export const useMapStore = create<MapStore>((set, get) => ({
       useBottomSheetStore.getState().setSpot(detailSpot);
       useBottomSheetStore.getState().setMode("spot");
       useBottomSheetStore.getState().setState("middle");
-
       setTimeout(() => {
         window.moveMapTo?.(detailSpot.latitude, detailSpot.longitude, 4);
       }, 100);
@@ -198,10 +202,12 @@ export const useMapStore = create<MapStore>((set, get) => ({
     }
   },
   fetchShorts: async (pageNum = 0) => {
-    const { center, zoom } = get();
+    const { center, zoom, filters } = get();
     const radius = RADIUS_BY_ZOOM[zoom] || 5000;
     const { mode, spot } = useBottomSheetStore.getState();
     set({ isLoading: true });
+    console.log("center", center);
+    console.log("radius", radius);
     try {
       const res = await shortsApi.getList({
         page: pageNum,
@@ -210,6 +216,9 @@ export const useMapStore = create<MapStore>((set, get) => ({
         latitude: center.lat,
         longitude: center.lng,
         ...(mode === "nearby" && { radius }),
+        ...(filters.weather && { weather: filters.weather }),
+        ...(filters.season && { season: filters.season }),
+        ...(filters.theme && { theme: filters.theme }),
       });
 
       const mappedShorts: Shorts[] = res.content.map((item: any) => ({

@@ -3,7 +3,15 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
 import type { Swiper as SwiperType } from "swiper";
 import ReactPlayer from "react-player";
-import { ArrowLeft, Heart, Share2, MapPin, Play, Volume2, VolumeX } from "lucide-react";
+import {
+  ArrowLeft,
+  Heart,
+  Share2,
+  MapPin,
+  Play,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 import { BottomNav, WeatherBadge, SeasonBadge } from "@/components/common";
 import { shortsApi } from "@/api/shorts";
 import type { Shorts } from "@/types";
@@ -20,7 +28,9 @@ export const ShortsViewerPage = () => {
     district?: string;
   } | null;
 
-  const [shortsList, setShortsList] = useState<Shorts[]>(state?.shortsList || []);
+  const [shortsList, setShortsList] = useState<Shorts[]>(
+    state?.shortsList || []
+  );
   const [activeIndex, setActiveIndex] = useState(state?.startIndex || 0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
@@ -45,7 +55,7 @@ export const ShortsViewerPage = () => {
       const initialCounts: Record<string, number> = {};
       state.shortsList.forEach((s) => {
         initialLikes[s.id] = s.liked || false;
-        initialCounts[s.id] = s.likeCount;
+        initialCounts[s.id] = s.good;
       });
       setLikes(initialLikes);
       setLikeCounts(initialCounts);
@@ -54,9 +64,9 @@ export const ShortsViewerPage = () => {
 
   // 조회수 증가
   useEffect(() => {
-    if (currentShorts && !viewedRef.current.has(currentShorts.id)) {
-      viewedRef.current.add(currentShorts.id);
-      shortsApi.increaseViews(currentShorts.id).catch(console.error);
+    if (currentShorts && !viewedRef.current.has(String(currentShorts.id))) {
+      viewedRef.current.add(String(currentShorts.id));
+      shortsApi.increaseViews(String(currentShorts.id)).catch(console.error);
     }
   }, [currentShorts?.id]);
 
@@ -80,7 +90,7 @@ export const ShortsViewerPage = () => {
       // 좋아요 상태 설정
       newShorts.forEach((s) => {
         setLikes((prev) => ({ ...prev, [s.id]: s.liked || false }));
-        setLikeCounts((prev) => ({ ...prev, [s.id]: s.likeCount }));
+        setLikeCounts((prev) => ({ ...prev, [s.id]: s.good }));
       });
 
       setHasMore(res.page < res.totalPages - 1);
@@ -108,7 +118,7 @@ export const ShortsViewerPage = () => {
     }
   };
 
-  const toggleLike = async (id: string) => {
+  const toggleLike = async (id: number) => {
     try {
       const res = await shortsApi.toggleLike(id);
       setLikes((prev) => ({ ...prev, [id]: res.liked }));
@@ -153,23 +163,33 @@ export const ShortsViewerPage = () => {
         initialSlide={state?.startIndex || 0}
         onSwiper={(swiper) => (swiperRef.current = swiper)}
         onSlideChange={handleSlideChange}
-        className="h-full w-full">
+        className="h-full w-full"
+      >
         {shortsList.map((shorts, index) => (
           <SwiperSlide key={shorts.id}>
             <div className="relative w-full h-full" onClick={togglePlay}>
               <ReactPlayer
-                url={shorts.videoUrl}
+                url={shorts.video}
                 playing={activeIndex === index && isPlaying}
                 muted={isMuted}
                 loop
                 width="100%"
                 height="100%"
-                style={{ position: "absolute", top: 0, left: 0, objectFit: "cover" }}
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  objectFit: "cover",
+                }}
                 playsinline
                 config={{
                   file: {
                     attributes: {
-                      style: { objectFit: "cover", width: "100%", height: "100%" },
+                      style: {
+                        objectFit: "cover",
+                        width: "100%",
+                        height: "100%",
+                      },
                     },
                   },
                 }}
@@ -192,12 +212,17 @@ export const ShortsViewerPage = () => {
         <div className="flex items-center justify-between">
           <button
             onClick={() => navigate(-1)}
-            className="w-10 h-10 bg-black/30 backdrop-blur rounded-full flex items-center justify-center">
+            className="w-10 h-10 bg-black/30 backdrop-blur rounded-full flex items-center justify-center"
+          >
             <ArrowLeft size={22} className="text-white" />
           </button>
           <div className="flex items-center gap-2">
-            {currentShorts.weather && <WeatherBadge weather={currentShorts.weather} size="sm" />}
-            {currentShorts.season && <SeasonBadge season={currentShorts.season} size="sm" />}
+            {currentShorts.weather && (
+              <WeatherBadge weather={currentShorts.weather} size="sm" />
+            )}
+            {currentShorts.season && (
+              <SeasonBadge season={currentShorts.season} size="sm" />
+            )}
           </div>
         </div>
       </div>
@@ -206,16 +231,19 @@ export const ShortsViewerPage = () => {
       <div className="absolute right-4 bottom-36 flex flex-col items-center gap-5 z-20">
         <button
           onClick={() => toggleLike(currentShorts.id)}
-          className="flex flex-col items-center gap-1">
+          className="flex flex-col items-center gap-1"
+        >
           <div className="w-12 h-12 bg-black/30 backdrop-blur rounded-full flex items-center justify-center">
             <Heart
               size={24}
-              className={likes[currentShorts.id] ? "text-red-500" : "text-white"}
+              className={
+                likes[currentShorts.id] ? "text-red-500" : "text-white"
+              }
               fill={likes[currentShorts.id] ? "currentColor" : "none"}
             />
           </div>
           <span className="text-white text-xs font-medium">
-            {formatCount(likeCounts[currentShorts.id] || currentShorts.likeCount)}
+            {formatCount(likeCounts[currentShorts.id] || currentShorts.good)}
           </span>
         </button>
 
@@ -226,14 +254,20 @@ export const ShortsViewerPage = () => {
           <span className="text-white text-xs font-medium">공유</span>
         </button>
 
-        <button onClick={handleLocationClick} className="flex flex-col items-center gap-1">
+        <button
+          onClick={handleLocationClick}
+          className="flex flex-col items-center gap-1"
+        >
           <div className="w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center">
             <MapPin size={24} className="text-white" />
           </div>
           <span className="text-white text-xs font-medium">위치</span>
         </button>
 
-        <button onClick={() => setIsMuted(!isMuted)} className="flex flex-col items-center gap-1">
+        <button
+          onClick={() => setIsMuted(!isMuted)}
+          className="flex flex-col items-center gap-1"
+        >
           <div className="w-12 h-12 bg-black/30 backdrop-blur rounded-full flex items-center justify-center">
             {isMuted ? (
               <VolumeX size={24} className="text-white" />
@@ -241,19 +275,25 @@ export const ShortsViewerPage = () => {
               <Volume2 size={24} className="text-white" />
             )}
           </div>
-          <span className="text-white text-xs font-medium">{isMuted ? "음소거" : "소리"}</span>
+          <span className="text-white text-xs font-medium">
+            {isMuted ? "음소거" : "소리"}
+          </span>
         </button>
       </div>
 
       {/* 하단 정보 */}
       <div className="absolute bottom-16 left-0 right-0 p-5 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-20">
-        <h2 className="text-white text-xl font-bold mb-1">{currentShorts.title}</h2>
+        <h2 className="text-white text-xl font-bold mb-1">
+          {currentShorts.title}
+        </h2>
         {currentShorts.touristSpot && (
           <>
             <p className="text-white/80 text-sm flex items-center gap-1 mb-2">
               <MapPin size={14} /> {currentShorts.touristSpot.address}
             </p>
-            <p className="text-white/60 text-sm">{currentShorts.touristSpot.description}</p>
+            <p className="text-white/60 text-sm">
+              {currentShorts.touristSpot.description}
+            </p>
           </>
         )}
 

@@ -100,17 +100,16 @@ export const MapView = () => {
   useEffect(() => {
     if (!mapInstanceRef.current || !isLoaded || places.length === 0) return;
 
-    if (clustererRef.current) {
-      clustererRef.current.clear();
-    }
-
     const markers = places.map((place) => {
-      const position = new window.kakao.maps.LatLng(place.latitude, place.longitude);
+      const position = new window.kakao.maps.LatLng(
+        place.latitude,
+        place.longitude
+      );
 
       const marker = new window.kakao.maps.Marker({
         position,
       });
-
+      marker.setMap(mapInstanceRef.current);
       window.kakao.maps.event.addListener(marker, "click", () => {
         open(place);
         setMode("spot");
@@ -118,19 +117,14 @@ export const MapView = () => {
 
       return marker;
     });
-
-    clustererRef.current = new window.kakao.maps.MarkerClusterer({
-      map: mapInstanceRef.current,
-      averageCenter: true,
-      minLevel: 6,
-      markers: markers,
-    });
-  }, [isLoaded, places, open, setMode]);
+  }, [places]);
 
   // 숏츠 마커
   useEffect(() => {
     if (!mapInstanceRef.current || !isLoaded) return;
-
+    if (clustererRef.current) {
+      clustererRef.current.clear();
+    }
     // 기존 숏츠 마커 제거
     shortsMarkersRef.current.forEach((marker) => marker.setMap(null));
     shortsMarkersRef.current = [];
@@ -146,7 +140,10 @@ export const MapView = () => {
     const validShorts = shorts.filter((s) => s.latitude && s.longitude);
 
     const markers = validShorts.map((shortsItem) => {
-      const position = new window.kakao.maps.LatLng(shortsItem.latitude, shortsItem.longitude);
+      const position = new window.kakao.maps.LatLng(
+        shortsItem.latitude,
+        shortsItem.longitude
+      );
 
       const marker = new window.kakao.maps.Marker({
         position,
@@ -177,14 +174,19 @@ export const MapView = () => {
 
       return marker;
     });
-
+    clustererRef.current = new window.kakao.maps.MarkerClusterer({
+      map: mapInstanceRef.current,
+      averageCenter: true,
+      minLevel: 6,
+      markers: markers,
+    });
     shortsMarkersRef.current = markers;
   }, [isLoaded, shorts, setHoveredShorts]);
 
   // 데이터 로드
   useEffect(() => {
     if (isLoaded) {
-      fetchNearbyPlaces();
+      // fetchNearbyPlaces();
       fetchShorts();
     }
   }, [isLoaded]);
