@@ -210,6 +210,8 @@ export const useMapStore = create<MapStore>((set, get) => ({
         createdAt: item.createdAt,
         videoUrl: item.videoUrl || "",
         duration: item.duration || 0,
+        latitude: item.latitude,
+        longitude: item.longitude,
       }));
       console.log(mappedShorts);
 

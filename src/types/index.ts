@@ -13,6 +13,8 @@ export interface Shorts {
   season?: Season; // optional로 변경
   createdAt: string;
   liked?: boolean; // 추가
+  latitude: number;
+  longitude: number;
 }
 
 // 관광지
@@ -35,7 +37,14 @@ export interface TouristSpot {
 // 날씨/계절/테마
 export type Weather = "sunny" | "cloudy" | "rainy" | "snowy";
 export type Season = "spring" | "summer" | "fall" | "winter";
-export type Theme = "night_view" | "ocean" | "mountain" | "cafe" | "food" | "festival" | "walk";
+export type Theme =
+  | "night_view"
+  | "ocean"
+  | "mountain"
+  | "cafe"
+  | "food"
+  | "festival"
+  | "walk";
 
 // 지도
 export interface MapBounds {

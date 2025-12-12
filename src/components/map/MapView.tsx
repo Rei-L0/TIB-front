@@ -16,7 +16,7 @@ export const MapView = () => {
   const { center, zoom, setCenter, setZoom } = useMapStore();
   const { open } = useBottomSheetStore();
 
-  const { places, fetchNearbyPlaces } = useMapStore();
+  const { places, shorts, fetchShorts } = useMapStore();
   const { setMode } = useBottomSheetStore();
 
   useEffect(() => {
@@ -77,11 +77,6 @@ export const MapView = () => {
   useEffect(() => {
     if (!mapInstanceRef.current || !isLoaded || places.length === 0) return;
 
-    // 기존 클러스터러 제거
-    if (clustererRef.current) {
-      clustererRef.current.clear();
-    }
-
     // 마커 생성
     const markers = places.map((place) => {
       const position = new window.kakao.maps.LatLng(
@@ -100,6 +95,31 @@ export const MapView = () => {
 
       return marker;
     });
+  }, [places]);
+
+  useEffect(() => {
+    if (!mapInstanceRef.current || !isLoaded || shorts.length === 0) return;
+
+    // 기존 클러스터러 제거
+    if (clustererRef.current) {
+      clustererRef.current.clear();
+    }
+
+    console.log("test");
+    console.log(shorts);
+    // 마커 생성
+    const markers = shorts.map((short) => {
+      const position = new window.kakao.maps.LatLng(
+        short.latitude,
+        short.longitude
+      );
+
+      const marker = new window.kakao.maps.Marker({
+        position,
+      });
+
+      return marker;
+    });
 
     // 클러스터러 생성
     clustererRef.current = new window.kakao.maps.MarkerClusterer({
@@ -108,12 +128,12 @@ export const MapView = () => {
       minLevel: 6,
       markers: markers,
     });
-  }, [isLoaded, places]);
+  }, [isLoaded, shorts]);
 
   // 관광지 데이터 가져오기
   useEffect(() => {
     if (isLoaded) {
-      fetchNearbyPlaces();
+      fetchShorts();
     }
   }, [isLoaded]);
 
