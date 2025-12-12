@@ -1,10 +1,11 @@
 import { MapPin } from "lucide-react";
-import { useMapStore } from "@/store";
+import { useMapStore, useBottomSheetStore } from "@/store";
 
 export const MapControls = () => {
   const { fetchShorts } = useMapStore();
-
+  const { setMode } = useBottomSheetStore();
   const handleNearbySpots = () => {
+    setMode("nearby");
     fetchShorts();
     console.log("test");
   };

@@ -16,7 +16,7 @@ export const MapView = () => {
   const shortsMarkersRef = useRef<any[]>([]);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
-
+  const placeMarkersRef = useRef<any[]>([]);
   const {
     center,
     zoom,
@@ -31,7 +31,7 @@ export const MapView = () => {
     setHoveredShorts,
   } = useMapStore();
 
-  const { open, setMode } = useBottomSheetStore();
+  const { open, mode, setMode } = useBottomSheetStore();
 
   // 카카오맵 스크립트 로드
   useEffect(() => {
@@ -99,6 +99,10 @@ export const MapView = () => {
   // 관광지 마커 + 클러스터 표시
   useEffect(() => {
     if (!mapInstanceRef.current || !isLoaded || places.length === 0) return;
+    placeMarkersRef.current.forEach((marker) => marker.setMap(null));
+    placeMarkersRef.current = [];
+
+    if (mode !== "spot" || places.length === 0) return;
 
     const markers = places.map((place) => {
       const position = new window.kakao.maps.LatLng(
@@ -117,7 +121,8 @@ export const MapView = () => {
 
       return marker;
     });
-  }, [places]);
+    placeMarkersRef.current = markers;
+  }, [places, mode]);
 
   // 숏츠 마커
   useEffect(() => {

@@ -15,13 +15,13 @@ import {
   Footprints,
   Moon,
 } from "lucide-react";
-import { useMapStore } from "@/store";
+import { useMapStore, useBottomSheetStore } from "@/store";
 import type { Weather, Season, TouristSpot, Theme } from "@/types";
 
 export const FilterButtons = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { filters, setFilters, fetchShorts, setPlaces } = useMapStore();
-
+  const { setMode } = useBottomSheetStore();
   const weatherOptions: {
     value: Weather;
     icon: React.ReactNode;
@@ -53,7 +53,7 @@ export const FilterButtons = () => {
 
   const handleFilterChange = (newFilters: Partial<typeof filters>) => {
     setFilters(newFilters);
-
+    setMode("nearby");
     fetchShorts();
   };
 
