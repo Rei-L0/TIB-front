@@ -1,6 +1,20 @@
 // src/components/map/FilterButtons.tsx
 import { useState } from "react";
-import { Filter, ChevronDown } from "lucide-react";
+import {
+  Filter,
+  ChevronDown,
+  Sun,
+  Cloud,
+  Snowflake,
+  CloudRain,
+  Waves,
+  Mountain,
+  Coffee,
+  Utensils,
+  PartyPopper,
+  Footprints,
+  Moon,
+} from "lucide-react";
 import { useMapStore } from "@/store";
 import type { Weather, Season, TouristSpot, Theme } from "@/types";
 
@@ -8,25 +22,34 @@ export const FilterButtons = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { filters, setFilters, fetchShorts, setPlaces } = useMapStore();
 
-  const weatherOptions: { value: Weather; label: string }[] = [
-    { value: "Sunny", label: "☀️ 맑음" },
-    { value: "Cloudy", label: "☁️ 흐림" },
-    { value: "Rainy", label: "🌧️ 비" },
-    { value: "Snowy", label: "❄️ 눈" },
+  const weatherOptions: {
+    value: Weather;
+    icon: React.ReactNode;
+    label: string;
+  }[] = [
+    { value: "Sunny", icon: <Sun size={16} />, label: "맑음" },
+    { value: "Cloudy", icon: <Cloud size={16} />, label: "흐림" },
+    { value: "Rainy", icon: <CloudRain size={16} />, label: "비" },
+    { value: "Snowy", icon: <Snowflake size={16} />, label: "눈" },
   ];
 
   const seasonOptions: { value: Season; label: string }[] = [
-    { value: "Spring", label: "🌸 봄" },
-    { value: "Summer", label: "🌻 여름" },
-    { value: "Autumn", label: "🍂 가을" },
-    { value: "Winter", label: "⛄ 겨울" },
+    { value: "Spring", label: "봄" },
+    { value: "Summer", label: "여름" },
+    { value: "Autumn", label: "가을" },
+    { value: "Winter", label: "겨울" },
   ];
 
-  const themeOptions: { value: Theme; label: string }[] = [
-    { value: "NightView", label: "🌅 야경" },
-    { value: "Rest", label: "☀️ 자연" },
-    { value: "Food", label: "🌙 맛집" },
-  ];
+  const themeOptions: { value: Theme; icon: React.ReactNode; label: string }[] =
+    [
+      { value: "NightView", icon: <Moon size={16} />, label: "야경" },
+      { value: "Ocean", icon: <Waves size={16} />, label: "바다" },
+      { value: "Mountain", icon: <Mountain size={16} />, label: "산" },
+      { value: "Cafe", icon: <Coffee size={16} />, label: "카페" },
+      { value: "Food", icon: <Utensils size={16} />, label: "맛집" },
+      { value: "Festival", icon: <PartyPopper size={16} />, label: "축제" },
+      { value: "Walk", icon: <Footprints size={16} />, label: "산책" },
+    ];
 
   const handleFilterChange = (newFilters: Partial<typeof filters>) => {
     setFilters(newFilters);
@@ -108,11 +131,11 @@ export const FilterButtons = () => {
                   key={item.value}
                   onClick={() =>
                     handleFilterChange({
-                      time: filters.time === item.value ? null : item.value,
+                      theme: filters.theme === item.value ? null : item.value,
                     })
                   }
                   className={`w-14 py-1.5 rounded-full text-xs font-medium ${
-                    filters.time === item.value
+                    filters.theme === item.value
                       ? "bg-emerald-500 text-white"
                       : "bg-gray-100 text-gray-700"
                   }`}

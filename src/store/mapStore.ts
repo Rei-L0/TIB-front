@@ -36,6 +36,15 @@ interface MapStore {
   searchResults: TouristSpot[];
   isSearchOpen: boolean;
   shorts: Shorts[];
+
+  // interface에 추가
+  hoveredShorts: Shorts | null;
+  hoverPosition: { x: number; y: number } | null;
+  setHoveredShorts: (
+    shorts: Shorts | null,
+    position?: { x: number; y: number }
+  ) => void;
+
   setShorts: (shorts: Shorts[]) => void;
   fetchShorts: (pageNum?: number) => void;
   setKeyword: (keyword: string) => void;
@@ -64,6 +73,14 @@ export const useMapStore = create<MapStore>((set, get) => ({
   searchResults: [],
   isSearchOpen: false,
   shorts: [],
+  hoveredShorts: null,
+  hoverPosition: null,
+  setHoveredShorts: (shorts, position) =>
+    set({
+      hoveredShorts: shorts,
+      hoverPosition: position || null,
+    }),
+
   setShorts: (shorts) => set({ shorts }),
   setKeyword: (keyword) => set({ keyword }),
   setPlaces: (places) => set({ places }),
@@ -189,6 +206,8 @@ export const useMapStore = create<MapStore>((set, get) => ({
     const radius = RADIUS_BY_ZOOM[zoom] || 5000;
     const { mode, spot } = useBottomSheetStore.getState();
     set({ isLoading: true });
+    console.log("center", center);
+    console.log("radius", radius);
     try {
       const res = await shortsApi.getList({
         page: pageNum,
@@ -205,15 +224,14 @@ export const useMapStore = create<MapStore>((set, get) => ({
       const mappedShorts: Shorts[] = res.content.map((item: any) => ({
         id: item.id,
         title: item.title,
+        video: item.video,
         thumbnailUrl: item.thumbnailUrl,
-        viewCount: item.readcount,
-        likeCount: item.good,
+        readcount: item.readcount,
+        good: item.good,
         liked: item.liked,
         createdAt: item.createdAt,
-        videoUrl: item.videoUrl || "",
-        duration: item.duration || 0,
-        latitude: item.latitude,
-        longitude: item.longitude,
+        latitude: item.latitude, // 추가!
+        longitude: item.longitude, // 추가!
       }));
       console.log(mappedShorts);
 

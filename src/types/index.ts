@@ -1,20 +1,19 @@
 // 숏츠
-// 숏츠
 export interface Shorts {
-  id: string;
+  id: number;
   title: string;
-  videoUrl: string;
+  video: string;
   thumbnailUrl: string;
-  viewCount: number;
-  likeCount: number;
-  duration: number;
-  touristSpot?: TouristSpot; // optional로 변경
-  weather?: Weather; // optional로 변경
-  season?: Season; // optional로 변경
-  createdAt: string;
-  liked?: boolean; // 추가
+  readcount: number;
+  good: number;
   latitude: number;
   longitude: number;
+  liked?: boolean;
+  createdAt: string;
+  radius?: number | null;
+  touristSpot?: TouristSpot;
+  weather?: Weather;
+  season?: Season;
 }
 
 // 관광지

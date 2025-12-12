@@ -69,7 +69,7 @@ export const shortsApi = {
 
   // 좋아요 토글
   toggleLike: async (
-    id: string
+    id: number
   ): Promise<{ shortsId: number; liked: boolean; good: number }> => {
     const res = await fetch(`${API_BASE}/shorts/${id}/likes`, {
       method: "POST",

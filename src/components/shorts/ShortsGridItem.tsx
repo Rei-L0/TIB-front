@@ -44,7 +44,7 @@ export const ShortsGridItem = ({ shorts, onClick }: ShortsGridItemProps) => {
           <p className="text-white text-xs font-medium truncate">{shorts.title}</p>
           <div className="text-white/80 text-[10px] flex items-center gap-1 mt-0.5">
             <Eye size={10} />
-            <span>{formatViewCount(shorts.viewCount)}</span>
+            <span>{formatViewCount(shorts.readcount)}</span>
           </div>
         </div>
       </div>
