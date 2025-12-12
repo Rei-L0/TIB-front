@@ -36,6 +36,12 @@ interface MapStore {
   searchResults: TouristSpot[];
   isSearchOpen: boolean;
   shorts: Shorts[];
+
+  // interface에 추가
+  hoveredShorts: Shorts | null;
+  hoverPosition: { x: number; y: number } | null;
+  setHoveredShorts: (shorts: Shorts | null, position?: { x: number; y: number }) => void;
+
   setShorts: (shorts: Shorts[]) => void;
   fetchShorts: (pageNum?: number) => void;
   setKeyword: (keyword: string) => void;
@@ -64,6 +70,14 @@ export const useMapStore = create<MapStore>((set, get) => ({
   searchResults: [],
   isSearchOpen: false,
   shorts: [],
+  hoveredShorts: null,
+  hoverPosition: null,
+  setHoveredShorts: (shorts, position) =>
+    set({
+      hoveredShorts: shorts,
+      hoverPosition: position || null,
+    }),
+
   setShorts: (shorts) => set({ shorts }),
   setKeyword: (keyword) => set({ keyword }),
   setPlaces: (places) => set({ places }),
@@ -123,18 +137,16 @@ export const useMapStore = create<MapStore>((set, get) => ({
       const { data } = await attractionApi.getList(keyword);
       console.log("검색 응답:", data);
 
-      const searchResults: TouristSpot[] = data.attractions.content.map(
-        (item) => ({
-          id: String(item.contentId),
-          name: item.title,
-          address: item.addr1 + (item.addr2 ? ` ${item.addr2}` : ""),
-          latitude: item.latitude,
-          longitude: item.longitude,
-          thumbnailUrl: item.firstImage,
-          shortsCount: item.shortsCount,
-          category: `${item.sidoName} ${item.gugunName}`,
-        })
-      );
+      const searchResults: TouristSpot[] = data.attractions.content.map((item) => ({
+        id: String(item.contentId),
+        name: item.title,
+        address: item.addr1 + (item.addr2 ? ` ${item.addr2}` : ""),
+        latitude: item.latitude,
+        longitude: item.longitude,
+        thumbnailUrl: item.firstImage,
+        shortsCount: item.shortsCount,
+        category: `${item.sidoName} ${item.gugunName}`,
+      }));
       set({ searchResults });
     } catch (error) {
       console.error("검색 실패:", error);
@@ -203,13 +215,14 @@ export const useMapStore = create<MapStore>((set, get) => ({
       const mappedShorts: Shorts[] = res.content.map((item: any) => ({
         id: item.id,
         title: item.title,
+        video: item.video,
         thumbnailUrl: item.thumbnailUrl,
-        viewCount: item.readcount,
-        likeCount: item.good,
+        readcount: item.readcount,
+        good: item.good,
         liked: item.liked,
         createdAt: item.createdAt,
-        videoUrl: item.videoUrl || "",
-        duration: item.duration || 0,
+        latitude: item.latitude, // 추가!
+        longitude: item.longitude, // 추가!
       }));
       console.log(mappedShorts);
 
