@@ -211,7 +211,7 @@ export const useMapStore = create<MapStore>((set, get) => ({
     try {
       const res = await shortsApi.getList({
         page: pageNum,
-        size: 20,
+        size: 1000,
         contentId: mode === "spot" && spot?.id ? Number(spot.id) : undefined,
         latitude: center.lat,
         longitude: center.lng,

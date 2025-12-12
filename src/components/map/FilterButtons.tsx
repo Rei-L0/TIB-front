@@ -122,10 +122,10 @@ export const FilterButtons = () => {
             </div>
           </div>
 
-          {/* 시간 */}
+          {/* 테마 */}
           <div>
             <p className="text-xs font-medium text-gray-500 mb-2">테마</p>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-4 gap-2">
               {themeOptions.map((item) => (
                 <button
                   key={item.value}
