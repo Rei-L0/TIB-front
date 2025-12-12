@@ -64,7 +64,7 @@ export const FilterButtons = () => {
         className="px-3 py-2 bg-white rounded-full shadow-md text-xs font-medium text-gray-700 flex items-center gap-1"
       >
         <Filter size={12} />
-        필터1
+        필터
         <ChevronDown
           size={12}
           className={`transition-transform ${isOpen ? "rotate-180" : ""}`}
