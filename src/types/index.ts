@@ -35,16 +35,17 @@ export interface TouristSpot {
 }
 
 // 날씨/계절/테마
-export type Weather = "sunny" | "cloudy" | "rainy" | "snowy";
-export type Season = "spring" | "summer" | "fall" | "winter";
+export type Weather = "Sunny" | "Cloudy" | "Rainy" | "Snowy";
+export type Season = "Spring" | "Summer" | "Autumn" | "Winter";
 export type Theme =
-  | "night_view"
-  | "ocean"
-  | "mountain"
-  | "cafe"
-  | "food"
-  | "festival"
-  | "walk";
+  | "NightView"
+  | "Ocean"
+  | "Mountain"
+  | "Cafe"
+  | "Food"
+  | "Festival"
+  | "Walk"
+  | "Rest";
 
 // 지도
 export interface MapBounds {

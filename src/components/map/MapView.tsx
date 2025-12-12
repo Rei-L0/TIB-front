@@ -105,8 +105,6 @@ export const MapView = () => {
       clustererRef.current.clear();
     }
 
-    console.log("test");
-    console.log(shorts);
     // 마커 생성
     const markers = shorts.map((short) => {
       const position = new window.kakao.maps.LatLng(
