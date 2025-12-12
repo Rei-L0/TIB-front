@@ -76,7 +76,7 @@ export const MapView = () => {
   // 마커 + 클러스터 표시
   useEffect(() => {
     if (!mapInstanceRef.current || !isLoaded || places.length === 0) return;
-
+    console.log("places", places);
     // 마커 생성
     const markers = places.map((place) => {
       const position = new window.kakao.maps.LatLng(
@@ -87,7 +87,7 @@ export const MapView = () => {
       const marker = new window.kakao.maps.Marker({
         position,
       });
-
+      marker.setMap(mapInstanceRef.current);
       window.kakao.maps.event.addListener(marker, "click", () => {
         open(place);
         setMode("spot");
