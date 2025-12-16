@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { useMapStore, useBottomSheetStore } from "@/store";
-import { ShortsPreviewModal } from "@/components/shorts/ShortsPreviewModal";
 
 declare global {
   interface Window {
@@ -14,24 +13,11 @@ export const MapView = () => {
   const mapInstanceRef = useRef<any>(null);
   const clustererRef = useRef<any>(null);
   const shortsMarkersRef = useRef<any[]>([]);
-  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const placeMarkersRef = useRef<any[]>([]);
-  const {
-    center,
-    zoom,
-    setCenter,
-    setZoom,
-    places,
-    fetchNearbyPlaces,
-    shorts,
-    fetchShorts,
-    hoveredShorts,
-    hoverPosition,
-    setHoveredShorts,
-  } = useMapStore();
+  const { center, zoom, setCenter, setZoom, places, shorts, fetchShorts } = useMapStore();
 
-  const { open, mode, setMode } = useBottomSheetStore();
+  const { open, mode, setMode, openShorts } = useBottomSheetStore();
 
   // 카카오맵 스크립트 로드
   useEffect(() => {
@@ -88,14 +74,6 @@ export const MapView = () => {
     });
   };
 
-  // 타이머 취소 함수
-  const cancelHoverTimeout = () => {
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-      hoverTimeoutRef.current = null;
-    }
-  };
-
   // 관광지 마커 + 클러스터 표시
   useEffect(() => {
     if (!mapInstanceRef.current || !isLoaded || places.length === 0) return;
@@ -105,10 +83,7 @@ export const MapView = () => {
     if (mode !== "spot" || places.length === 0) return;
 
     const markers = places.map((place) => {
-      const position = new window.kakao.maps.LatLng(
-        place.latitude,
-        place.longitude
-      );
+      const position = new window.kakao.maps.LatLng(place.latitude, place.longitude);
 
       const marker = new window.kakao.maps.Marker({
         position,
@@ -130,13 +105,11 @@ export const MapView = () => {
     if (clustererRef.current) {
       clustererRef.current.clear();
     }
-    // 기존 숏츠 마커 제거
     shortsMarkersRef.current.forEach((marker) => marker.setMap(null));
     shortsMarkersRef.current = [];
 
     if (shorts.length === 0) return;
 
-    // 숏츠 마커 이미지 (노란 별)
     const markerImage = new window.kakao.maps.MarkerImage(
       "https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png",
       new window.kakao.maps.Size(36, 52)
@@ -145,10 +118,7 @@ export const MapView = () => {
     const validShorts = shorts.filter((s) => s.latitude && s.longitude);
 
     const markers = validShorts.map((shortsItem) => {
-      const position = new window.kakao.maps.LatLng(
-        shortsItem.latitude,
-        shortsItem.longitude
-      );
+      const position = new window.kakao.maps.LatLng(shortsItem.latitude, shortsItem.longitude);
 
       const marker = new window.kakao.maps.Marker({
         position,
@@ -156,29 +126,14 @@ export const MapView = () => {
         map: mapInstanceRef.current,
       });
 
-      // hover - 마우스 올렸을 때
-      window.kakao.maps.event.addListener(marker, "mouseover", () => {
-        cancelHoverTimeout();
-
-        const proj = mapInstanceRef.current.getProjection();
-        const point = proj.containerPointFromCoords(position);
-        setHoveredShorts(shortsItem, { x: point.x, y: point.y });
-      });
-
-      // hover - 마우스 벗어났을 때
-      window.kakao.maps.event.addListener(marker, "mouseout", () => {
-        hoverTimeoutRef.current = setTimeout(() => {
-          setHoveredShorts(null);
-        }, 300);
-      });
-
-      // 클릭 시 뷰어로 이동
+      // 클릭 시 바텀시트에 표시
       window.kakao.maps.event.addListener(marker, "click", () => {
-        window.location.href = `/shorts/viewer?id=${shortsItem.id}`;
+        openShorts(shortsItem);
       });
 
       return marker;
     });
+
     clustererRef.current = new window.kakao.maps.MarkerClusterer({
       map: mapInstanceRef.current,
       averageCenter: true,
@@ -186,22 +141,14 @@ export const MapView = () => {
       markers: markers,
     });
     shortsMarkersRef.current = markers;
-  }, [isLoaded, shorts, setHoveredShorts]);
+  }, [isLoaded, shorts, openShorts]);
 
   // 데이터 로드
   useEffect(() => {
     if (isLoaded) {
-      // fetchNearbyPlaces();
       fetchShorts();
     }
   }, [isLoaded]);
-
-  // 컴포넌트 언마운트 시 타이머 정리
-  useEffect(() => {
-    return () => {
-      cancelHoverTimeout();
-    };
-  }, []);
 
   return (
     <div className="relative w-full h-full">
@@ -212,14 +159,6 @@ export const MapView = () => {
           </div>
         )}
       </div>
-
-      {/* 숏츠 프리뷰 모달 */}
-      <ShortsPreviewModal
-        shorts={hoveredShorts}
-        position={hoverPosition}
-        onClose={() => setHoveredShorts(null)}
-        onMouseEnter={cancelHoverTimeout}
-      />
     </div>
   );
 };

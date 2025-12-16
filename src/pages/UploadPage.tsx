@@ -21,8 +21,6 @@ import { useUploadStore } from "@/store";
 import { useVideoMetadata } from "@/hooks";
 import { shortsApi } from "@/api/shorts";
 import { getWeatherByDate, type WeatherInfo } from "@/api/weather";
-
-const [weatherInfo, setWeatherInfo] = useState<WeatherInfo | null>(null);
 import type { Theme, NearbyAttraction, Weather, Season } from "@/types";
 
 const getAddressFromCoords = async (lat: number, lng: number): Promise<string> => {
@@ -106,6 +104,7 @@ export const UploadPage = () => {
   const [name, setName] = useState<string>("");
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [hashtagInput, setHashtagInput] = useState<string>("");
+  const [weatherInfo, setWeatherInfo] = useState<WeatherInfo | null>(null);
 
   const handleFileSelect = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -153,10 +152,10 @@ export const UploadPage = () => {
           setExtractedDate(date.toLocaleDateString("ko-KR"));
 
           const month = date.getMonth() + 1;
-          if (month >= 3 && month <= 5) setSeason("SPRING" as any);
-          else if (month >= 6 && month <= 8) setSeason("SUMMER" as any);
-          else if (month >= 9 && month <= 11) setSeason("AUTUMN" as any);
-          else setSeason("WINTER" as any);
+          if (month >= 3 && month <= 5) setSeason("Spring");
+          else if (month >= 6 && month <= 8) setSeason("Summer");
+          else if (month >= 9 && month <= 11) setSeason("Autumn");
+          else setSeason("Winter");
         } else {
           setExtractedDate("날짜 정보 없음");
         }
@@ -167,6 +166,7 @@ export const UploadPage = () => {
         } catch (err) {
           console.warn("썸네일 추출 실패:", err);
         }
+
         // 날씨 자동 조회
         if (meta.latitude && meta.longitude && meta.createdAt) {
           try {
@@ -183,13 +183,14 @@ export const UploadPage = () => {
             console.warn("날씨 자동 감지 실패:", err);
           }
         }
+
         setStep(2);
       } catch (err) {
         console.error("메타데이터 추출 실패:", err);
         alert("파일을 읽을 수 없습니다.");
       }
     },
-    [extractMetadata, extractThumbnail, setFile, setMetadata, setStep, setSeason]
+    [extractMetadata, extractThumbnail, setFile, setMetadata, setStep, setSeason, setWeather]
   );
 
   const handleAddHashtag = () => {
@@ -397,6 +398,7 @@ export const UploadPage = () => {
                 <p className="font-bold text-gray-900">{extractedDate || "-"}</p>
               </div>
             </div>
+
             {/* 날씨 정보 */}
             {weatherInfo && (
               <div className="mt-3 p-3 bg-white rounded-xl">
@@ -453,7 +455,7 @@ export const UploadPage = () => {
             <p className="font-bold text-gray-900 mb-3">📍 관광지 선택</p>
             {nearbySpots.length > 0 ? (
               <div className="space-y-2">
-                {nearbySpots.map((spot, index) => (
+                {nearbySpots.map((spot) => (
                   <button
                     key={spot.contentId}
                     onClick={() => setSelectedSpotId(spot.contentId)}
@@ -516,7 +518,7 @@ export const UploadPage = () => {
               {weatherOptions.map((opt) => (
                 <button
                   key={opt.value}
-                  onClick={() => setWeather(weather === opt.value ? null : (opt.value as any))}
+                  onClick={() => setWeather(weather === opt.value ? null : opt.value)}
                   className={`flex-1 py-2.5 rounded-xl flex items-center justify-center gap-1 text-sm font-medium ${
                     weather === opt.value
                       ? "bg-amber-100 text-amber-600 border-2 border-amber-300"
@@ -535,7 +537,7 @@ export const UploadPage = () => {
               {seasonOptions.map((opt) => (
                 <button
                   key={opt.value}
-                  onClick={() => setSeason(season === opt.value ? null : (opt.value as any))}
+                  onClick={() => setSeason(season === opt.value ? null : opt.value)}
                   className={`flex-1 py-2.5 rounded-xl text-sm font-medium ${
                     season === opt.value
                       ? "bg-pink-100 text-pink-600 border-2 border-pink-300"
