@@ -22,8 +22,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build
-        run: npm run build
+      - name: Build all languages
+        run: |
+           npm run build -- --outDir dist/ko
+           VITE_I18N_LANG=en npm run build -- --outDir dist/en
+           VITE_I18N_LANG=zh npm run build -- --outDir dist/zh
+           VITE_I18N_LANG=ja npm run build -- --outDir dist/ja
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
           VITE_NAVER_MAP_CLIENT_ID: ${{ secrets.VITE_NAVER_MAP_CLIENT_ID }}
