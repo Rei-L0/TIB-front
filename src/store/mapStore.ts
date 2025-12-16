@@ -64,7 +64,7 @@ interface MapStore {
 
 export const useMapStore = create<MapStore>((set, get) => ({
   center: { lat: 35.1796, lng: 129.0756 }, // 부산 기본값
-  zoom: 9,
+  zoom: 11,
   selectedSpotId: null,
   filters: {
     weather: null,
@@ -204,7 +204,7 @@ export const useMapStore = create<MapStore>((set, get) => ({
       useBottomSheetStore.getState().setMode("spot");
       useBottomSheetStore.getState().setState("middle");
       setTimeout(() => {
-        window.moveMapTo?.(detailSpot.latitude, detailSpot.longitude, 4);
+        window.moveMapTo?.(detailSpot.latitude, detailSpot.longitude, 16);
       }, 100);
     } catch (error) {
       console.error("상세 조회 실패:", error);
