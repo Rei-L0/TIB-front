@@ -5,18 +5,23 @@ import type {
   Season,
   TouristSpot,
   VideoMetadata,
+  Shorts,
 } from "@/types";
 
 export { useMapStore } from "./mapStore";
+
 // 바텀시트 상태
 interface BottomSheetStore {
   state: BottomSheetState;
   spot: TouristSpot | null;
-  mode: "spot" | "nearby" | "search" | "detail";
-  setMode: (mode: "spot" | "nearby" | "search" | "detail") => void;
+  mode: "spot" | "search" | "nearby" | "detail" | "shorts";
+  selectedShorts: Shorts | null;
+  setMode: (mode: "spot" | "nearby" | "search" | "detail" | "shorts") => void;
   setState: (state: BottomSheetState) => void;
   setSpot: (spot: TouristSpot | null) => void;
+  setSelectedShorts: (shorts: Shorts | null) => void;
   open: (spot: TouristSpot) => void;
+  openShorts: (shorts: Shorts) => void;
   close: () => void;
 }
 
@@ -24,11 +29,14 @@ export const useBottomSheetStore = create<BottomSheetStore>((set) => ({
   state: "min",
   spot: null,
   mode: "spot",
+  selectedShorts: null,
   setMode: (mode) => set({ mode }),
   setState: (state) => set({ state }),
   setSpot: (spot) => set({ spot }),
-  open: (spot) => set({ spot, state: "middle" }),
-  close: () => set({ spot: null, state: "min" }),
+  setSelectedShorts: (shorts) => set({ selectedShorts: shorts }),
+  open: (spot) => set({ spot, state: "middle", mode: "spot" }),
+  openShorts: (shorts) => set({ selectedShorts: shorts, state: "middle", mode: "shorts" }),
+  close: () => set({ spot: null, selectedShorts: null, state: "min" }),
 }));
 
 // 플레이어 상태
@@ -46,7 +54,7 @@ interface PlayerStore {
 export const usePlayerStore = create<PlayerStore>((set) => ({
   currentShortsId: null,
   isPlaying: false,
-  isMuted: true, // 자동재생 정책 때문에 기본 mute
+  isMuted: true,
   setCurrentShorts: (id) => set({ currentShortsId: id }),
   play: () => set({ isPlaying: true }),
   pause: () => set({ isPlaying: false }),
