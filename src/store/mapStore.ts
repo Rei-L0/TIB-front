@@ -80,11 +80,19 @@ export const useMapStore = create<MapStore>((set, get) => ({
   hoveredShorts: null,
   hoverPosition: null,
   language:
-    (localStorage.getItem("mapLanguage") as "ko" | "en" | "ja" | "zh") || "ko",
+    (import.meta.env.VITE_I18N_LANG as "ko" | "en" | "ja" | "zh") || "ko",
   setLanguage: (lang) => {
-    localStorage.setItem("mapLanguage", lang);
-    set({ language: lang });
-    window.location.reload();
+    const { pathname, search, hash } = window.location;
+    const currentBase = import.meta.env.BASE_URL.replace(/\/$/, ""); // /ko
+
+    // 현재 base 제거
+    let newPath = pathname;
+    if (currentBase && pathname.startsWith(currentBase)) {
+      newPath = pathname.slice(currentBase.length) || "/";
+    }
+
+    // 새 언어 경로로 이동
+    window.location.href = `/${lang}${newPath}${search}${hash}`;
   },
   setHoveredShorts: (shorts, position) =>
     set({
