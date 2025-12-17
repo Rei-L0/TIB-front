@@ -31,21 +31,29 @@ export const useBottomSheet = () => {
   const handleDragEnd = useCallback(() => {
     if (dragStart === null) return;
 
-    const threshold = 50;
+    // 드래그 후 최종 높이 기준으로 스냅
+    const finalHeight = heights[state] + currentY;
 
-    if (currentY > threshold) {
-      if (state === "min") setState("middle");
-      else if (state === "middle") setState("max");
-    } else if (currentY < -threshold) {
-      if (state === "max") setState("middle");
-      else if (state === "middle") setState("min");
+    // 각 상태의 중간점을 기준으로 판단
+    const midToMax = (heights.middle + heights.max) / 2; // 420
+    const minToMid = (heights.min + heights.middle) / 2; // 165
+
+    if (finalHeight > midToMax) {
+      setState("max");
+    } else if (finalHeight > minToMid) {
+      setState("middle");
+    } else {
+      setState("min");
     }
 
     setDragStart(null);
     setCurrentY(0);
   }, [dragStart, currentY, state, setState]);
 
-  const currentHeight = Math.max(heights.min, Math.min(560, heights[state] + currentY));
+  const currentHeight = Math.max(
+    heights.min,
+    Math.min(560, heights[state] + currentY)
+  );
 
   return {
     state,
@@ -57,8 +65,10 @@ export const useBottomSheet = () => {
       onMouseMove: (e: React.MouseEvent) => handleDragMove(e.clientY),
       onMouseUp: handleDragEnd,
       onMouseLeave: handleDragEnd,
-      onTouchStart: (e: React.TouchEvent) => handleDragStart(e.touches[0].clientY),
-      onTouchMove: (e: React.TouchEvent) => handleDragMove(e.touches[0].clientY),
+      onTouchStart: (e: React.TouchEvent) =>
+        handleDragStart(e.touches[0].clientY),
+      onTouchMove: (e: React.TouchEvent) =>
+        handleDragMove(e.touches[0].clientY),
       onTouchEnd: handleDragEnd,
     },
   };
@@ -74,7 +84,8 @@ export const useShortsFeed = (params?: {
 }) => {
   return useInfiniteQuery({
     queryKey: ["shorts", "feed", params],
-    queryFn: ({ pageParam }) => shortsApi.getFeed({ ...params, cursor: pageParam }),
+    queryFn: ({ pageParam }) =>
+      shortsApi.getFeed({ ...params, cursor: pageParam }),
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     initialPageParam: undefined as string | undefined,
   });
@@ -90,7 +101,8 @@ export const useShortsRelated = (params?: {
 }) => {
   return useInfiniteQuery({
     queryKey: ["shorts", "related", params],
-    queryFn: ({ pageParam }) => shortsApi.getRelated({ ...params, cursor: pageParam }),
+    queryFn: ({ pageParam }) =>
+      shortsApi.getRelated({ ...params, cursor: pageParam }),
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     initialPageParam: undefined as string | undefined,
     enabled: !!(params?.spotId || params?.district || params?.latitude),
@@ -181,7 +193,11 @@ function extractCreationDateFromMdta(bytes: Uint8Array): Date | null {
           const valueLength = dataSize - 16;
 
           let dateStr = "";
-          for (let j = 0; j < valueLength && valueOffset + j < bytes.length; j++) {
+          for (
+            let j = 0;
+            j < valueLength && valueOffset + j < bytes.length;
+            j++
+          ) {
             const char = bytes[valueOffset + j];
             if (char >= 32 && char < 127) {
               dateStr += String.fromCharCode(char);
@@ -217,7 +233,8 @@ function extractCreationTimeFromMvhd(bytes: Uint8Array): Date | null {
       const version = bytes[i + 4];
       const creationTime =
         version === 1
-          ? view.getUint32(i + 8, false) * 0x100000000 + view.getUint32(i + 12, false)
+          ? view.getUint32(i + 8, false) * 0x100000000 +
+            view.getUint32(i + 12, false)
           : view.getUint32(i + 8, false);
 
       if (creationTime > MP4_EPOCH_OFFSET) {
@@ -234,7 +251,9 @@ function extractCreationTimeFromMvhd(bytes: Uint8Array): Date | null {
 }
 
 // GPS 추출
-function extractGPS(bytes: Uint8Array): { latitude: number; longitude: number } | null {
+function extractGPS(
+  bytes: Uint8Array
+): { latitude: number; longitude: number } | null {
   const searchSize = Math.min(bytes.length, 500000);
 
   let fileString = "";
@@ -242,7 +261,9 @@ function extractGPS(bytes: Uint8Array): { latitude: number; longitude: number } 
     fileString += String.fromCharCode(bytes[i]);
   }
 
-  const match = fileString.match(/([+-]\d{1,3}\.\d{2,6})([+-]\d{1,3}\.\d{2,6})/);
+  const match = fileString.match(
+    /([+-]\d{1,3}\.\d{2,6})([+-]\d{1,3}\.\d{2,6})/
+  );
 
   if (match) {
     return {
@@ -256,66 +277,71 @@ function extractGPS(bytes: Uint8Array): { latitude: number; longitude: number } 
 
 // 영상 메타데이터 추출 훅
 export const useVideoMetadata = () => {
-  const extractMetadata = useCallback(async (file: File): Promise<VideoMetadata> => {
-    const basicMetadata = await new Promise<{
-      duration: number;
-      width: number;
-      height: number;
-    }>((resolve, reject) => {
-      const video = document.createElement("video");
-      video.preload = "metadata";
+  const extractMetadata = useCallback(
+    async (file: File): Promise<VideoMetadata> => {
+      const basicMetadata = await new Promise<{
+        duration: number;
+        width: number;
+        height: number;
+      }>((resolve, reject) => {
+        const video = document.createElement("video");
+        video.preload = "metadata";
 
-      video.onloadedmetadata = () => {
-        URL.revokeObjectURL(video.src);
-        resolve({
-          duration: video.duration,
-          width: video.videoWidth,
-          height: video.videoHeight,
-        });
-      };
+        video.onloadedmetadata = () => {
+          URL.revokeObjectURL(video.src);
+          resolve({
+            duration: video.duration,
+            width: video.videoWidth,
+            height: video.videoHeight,
+          });
+        };
 
-      video.onerror = () => {
-        URL.revokeObjectURL(video.src);
-        reject(new Error("Failed to load video metadata"));
-      };
+        video.onerror = () => {
+          URL.revokeObjectURL(video.src);
+          reject(new Error("Failed to load video metadata"));
+        };
 
-      video.src = URL.createObjectURL(file);
-    });
+        video.src = URL.createObjectURL(file);
+      });
 
-    let latitude: number | undefined;
-    let longitude: number | undefined;
-    let createdAt: string | undefined;
+      let latitude: number | undefined;
+      let longitude: number | undefined;
+      let createdAt: string | undefined;
 
-    try {
-      const arrayBuffer = await file.arrayBuffer();
-      const bytes = new Uint8Array(arrayBuffer);
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const bytes = new Uint8Array(arrayBuffer);
 
-      const creationDate = extractCreationDateFromMdta(bytes) ?? extractCreationTimeFromMvhd(bytes);
+        const creationDate =
+          extractCreationDateFromMdta(bytes) ??
+          extractCreationTimeFromMvhd(bytes);
 
-      if (creationDate) {
-        createdAt = creationDate.toISOString();
+        if (creationDate) {
+          createdAt = creationDate.toISOString();
+        }
+
+        const gpsData = extractGPS(bytes);
+        if (gpsData) {
+          latitude = gpsData.latitude;
+          longitude = gpsData.longitude;
+        }
+      } catch {
+        // 메타데이터 추출 실패 시 무시
       }
 
-      const gpsData = extractGPS(bytes);
-      if (gpsData) {
-        latitude = gpsData.latitude;
-        longitude = gpsData.longitude;
+      if (!createdAt && file.lastModified) {
+        createdAt = new Date(file.lastModified).toISOString();
       }
-    } catch {
-      // 메타데이터 추출 실패 시 무시
-    }
 
-    if (!createdAt && file.lastModified) {
-      createdAt = new Date(file.lastModified).toISOString();
-    }
-
-    return {
-      ...basicMetadata,
-      latitude,
-      longitude,
-      createdAt,
-    };
-  }, []);
+      return {
+        ...basicMetadata,
+        latitude,
+        longitude,
+        createdAt,
+      };
+    },
+    []
+  );
 
   const extractThumbnail = useCallback(async (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -378,7 +404,9 @@ export const useIntersectionObserver = (
 
 // 현재 위치 훅
 export const useGeolocation = () => {
-  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(
+    null
+  );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
