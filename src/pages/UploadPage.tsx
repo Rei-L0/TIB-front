@@ -134,11 +134,14 @@ export const UploadPage = () => {
             const spots = await shortsApi.getNearbyAttractions(
               meta.latitude,
               meta.longitude,
-              20000
+              100000
             );
-            setNearbySpots(spots);
-            if (spots.length > 0) {
-              setSelectedSpotId(spots[0].contentId);
+            const nearest5 = spots
+              .sort((a: NearbyAttraction, b: NearbyAttraction) => a.distance - b.distance)
+              .slice(0, 5);
+            setNearbySpots(nearest5);
+            if (nearest5.length > 0) {
+              setSelectedSpotId(nearest5[0].contentId);
             }
           } catch {
             setNearbySpots([]);
@@ -167,7 +170,6 @@ export const UploadPage = () => {
           console.warn("썸네일 추출 실패:", err);
         }
 
-        // 날씨 자동 조회
         if (meta.latitude && meta.longitude && meta.createdAt) {
           try {
             const info = await getWeatherByDate(
